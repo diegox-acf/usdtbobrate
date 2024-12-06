@@ -1,1 +1,1 @@
-export * from '@constants/client.constants';
+export const CONSTANT_EXAMPLE: string = 'TEST';

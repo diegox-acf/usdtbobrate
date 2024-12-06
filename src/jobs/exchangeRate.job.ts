@@ -3,9 +3,10 @@ import logger from '@utils/logger';
 import cron from 'node-cron';
 import ExchangeRateModel, { ExchangeRate } from '@models/exchangeRate.model';
 import { getLocalDate } from '@utils/index';
+import { properties } from '@config/properties';
 
 export const startJobScheduler = () => {
-  cron.schedule('*/10 * * * *', async () => {
+  cron.schedule(properties.job.cronExpresion, async () => {
     logger.info(
       `Generating exchangeRate history entry on ${getLocalDate(new Date().getTime())}`
     );

@@ -1,8 +1,8 @@
-import { EXCHANGE_RATE_URL } from '@constants/client.constants';
 import axios from 'axios';
+import { properties } from './properties';
 
 const client = axios.create({
-  baseURL: EXCHANGE_RATE_URL,
+  baseURL: properties.exchangeRate.apiURL,
   timeout: 5000,
   headers: {
     'Content-Type': 'application/json',
