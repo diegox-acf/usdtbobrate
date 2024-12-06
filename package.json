@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node dist/server.js",
+    "start2": "node -r ts-node/register/transpile-only -r tsconfig-paths/register dist/app.js",
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only --require tsconfig-paths/register src/server.ts",
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
@@ -41,6 +42,7 @@
     "node-cron": "^3.0.3",
     "node-telegram-bot-api": "^0.66.0",
     "ts-node": "^10.9.2",
-    "winston": "^3.15.0"
+    "winston": "^3.15.0",
+    "zod": "^3.23.8"
   }
 }

@@ -1,4 +1,4 @@
-import { TELEGRAM_BOT_TOKEN } from '@constants/telegramBot.constants';
+import { properties } from '@config/properties';
 import { ExchangeRate } from '@models/exchangeRate.model';
 import { TelegramUser } from '@models/telegramUser.model';
 import { generateExchangeRateHistoryEntry } from '@services/exchangeRate.service';
@@ -6,7 +6,9 @@ import TelegramUserService from '@services/telegramUser.service';
 
 import TelegramBot, { Message } from 'node-telegram-bot-api';
 
-const bot: TelegramBot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
+const bot: TelegramBot = new TelegramBot(properties.telegram.botToken, {
+  polling: true,
+});
 
 bot.onText(/\/start/, (msg: Message) => {
   bot.sendMessage(msg.chat.id, 'Welcome', {

@@ -33,3 +33,7 @@ export const getLocalDate = (timestamp: number): string => {
   const formattedDate = `${localTime.getFullYear()}-${String(localTime.getMonth() + 1).padStart(2, '0')}-${String(localTime.getDate()).padStart(2, '0')} ${String(localTime.getHours()).padStart(2, '0')}:${String(localTime.getMinutes()).padStart(2, '0')}:${String(localTime.getSeconds()).padStart(2, '0')}`;
   return formattedDate;
 };
+
+export const formatPrice = (price: number): string => {
+  return price.toFixed(2);
+};
