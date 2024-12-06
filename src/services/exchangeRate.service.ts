@@ -24,9 +24,9 @@ export const generateExchangeRateHistoryEntry = async (
     (acc: any, cur: any) => acc + cur,
     0
   );
-  const exchangeRatePrice = (exchangeRatePriceSum / prices.length).toFixed(2);
+  const exchangeRatePrice = exchangeRatePriceSum / prices.length;
   const exchangeRate: ExchangeRate = {
-    rate: +exchangeRatePrice,
+    rate: exchangeRatePrice,
     timestamp: new Date().getTime(),
   };
   logger.info(

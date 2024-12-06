@@ -1,14 +1,13 @@
-import connectDB from '@config/db';
 import dotenv from 'dotenv';
+dotenv.config();
 
+import { properties } from '@config/properties';
+import connectDB from '@config/db';
 import app from './app';
 import logger from '@utils/logger';
 import { startJobScheduler } from '@jobs/exchangeRate.job';
-import { generateExchangeRateHistoryEntry } from '@services/exchangeRate.service';
 
-const PORT = process.env.PORT || 3000;
-
-dotenv.config();
+const PORT = properties.app.port;
 
 const startServer = async () => {
   try {

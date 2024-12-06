@@ -1,8 +1,8 @@
+import { properties } from '@config/properties';
 import { createLogger, format, transports } from 'winston';
 
-const nodeEnv = process.env.NODE_ENV || 'dev';
 const logger = createLogger({
-  level: nodeEnv === 'prod' ? 'info' : 'debug',
+  level: properties.app.logLevel,
   format: format.combine(
     format.timestamp({
       format: 'YYYY-DD-MM HH:mm:ss',
