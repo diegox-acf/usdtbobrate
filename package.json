@@ -7,7 +7,7 @@
     "node": ">=20.6.0"
   },
   "scripts": {
-    "start": "node -r ts-node/register/transpile-only -r tsconfig-paths/register dist/app.js",
+    "start": "node -r ts-node/register/transpile-only -r tsconfig-paths/register dist/server.js",
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only --require tsconfig-paths/register src/server.ts",
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
