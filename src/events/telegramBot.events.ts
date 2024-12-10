@@ -3,6 +3,7 @@ import { ExchangeRate } from '@models/exchangeRate.model';
 import { TelegramUser } from '@models/telegramUser.model';
 import { generateExchangeRateHistoryEntry } from '@services/exchangeRate.service';
 import TelegramUserService from '@services/telegramUser.service';
+import { formatPrice } from '@utils/index';
 
 import TelegramBot, { Message } from 'node-telegram-bot-api';
 
@@ -58,7 +59,7 @@ bot.onText(/\/sell/, async (msg: Message) => {
       await generateExchangeRateHistoryEntry('SELL');
     bot.sendMessage(
       chatId,
-      `El tipo de cambio para la venta es: ${exchangeRate.rate}`
+      `El tipo de cambio para la venta es: ${formatPrice(exchangeRate.rate)}`
     );
   } catch (error: any) {
     bot.sendMessage(chatId, 'Ocurrio un error');
@@ -72,7 +73,7 @@ bot.onText(/\/buy/, async (msg: Message) => {
       await generateExchangeRateHistoryEntry('BUY');
     bot.sendMessage(
       chatId,
-      `El tipo de cambio para la compra es: ${exchangeRate.rate}`
+      `El tipo de cambio para la compra es: ${formatPrice(exchangeRate.rate)}`
     );
   } catch (error: any) {
     bot.sendMessage(chatId, 'Ocurrio un error');

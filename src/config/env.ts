@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   PORT: z.string().default('3000'),
+  HOST: z.string().default('localhost'),
   MONGODB_URI: z.string().min(1, 'Missing MongoDB URI'),
   NODE_ENV: z.enum(['prod', 'dev']).default('dev'),
   LOG_LEVEL: z.string().default('info'),
@@ -15,5 +16,11 @@ if (!success) {
   process.exit(1);
 }
 
-export const { PORT, MONGODB_URI, NODE_ENV, LOG_LEVEL, TELEGRAM_BOT_TOKEN } =
-  data;
+export const {
+  PORT,
+  MONGODB_URI,
+  NODE_ENV,
+  LOG_LEVEL,
+  TELEGRAM_BOT_TOKEN,
+  HOST,
+} = data;
