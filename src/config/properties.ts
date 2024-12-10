@@ -1,8 +1,15 @@
-import { LOG_LEVEL, MONGODB_URI, PORT, TELEGRAM_BOT_TOKEN } from '@config/env';
+import {
+  HOST,
+  LOG_LEVEL,
+  MONGODB_URI,
+  PORT,
+  TELEGRAM_BOT_TOKEN,
+} from '@config/env';
 
 export const properties = {
   app: {
     port: PORT,
+    host: HOST,
     logLevel: LOG_LEVEL,
   },
   mongo: {

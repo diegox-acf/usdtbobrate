@@ -1,6 +1,7 @@
 import client from '@config/client';
 import ExchangeRateModel, { ExchangeRate } from '@models/exchangeRate.model';
 import {
+  formatPrice,
   getExchangeRateQueryData,
   getLocalDate,
   TradeType,
@@ -30,7 +31,7 @@ export const generateExchangeRateHistoryEntry = async (
     timestamp: new Date().getTime(),
   };
   logger.info(
-    `Exchange rate entry with price: ${exchangeRate.rate} generated on ${getLocalDate(exchangeRate.timestamp)}`
+    `Exchange rate entry with price: ${formatPrice(exchangeRate.rate)} generated on ${getLocalDate(exchangeRate.timestamp)}`
   );
   return exchangeRate;
 };

@@ -7,14 +7,15 @@ import app from './app';
 import logger from '@utils/logger';
 import { startJobScheduler } from '@jobs/exchangeRate.job';
 
-const PORT = properties.app.port;
+const PORT = +properties.app.port;
+const HOST = properties.app.host;
 
 const startServer = async () => {
   try {
     await connectDB();
 
-    app.listen(PORT, () => {
-      logger.info(`Server running on port: ${PORT}`);
+    app.listen(PORT, properties.app.host, () => {
+      logger.info(`Server running on : ${HOST}:${PORT}`);
     });
     startJobScheduler();
   } catch (error) {
