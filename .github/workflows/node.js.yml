@@ -25,6 +25,6 @@ jobs:
     - name: Create env file
       run: |
         touch .env
-        echo "${{ secret.prod_env_file }}"
+        echo "${{ secrets.prod_env_file }}"
     - name: Install dependencies
       run: pnpm install
