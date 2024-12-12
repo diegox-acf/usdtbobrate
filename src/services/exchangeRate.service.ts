@@ -1,9 +1,12 @@
 import client from '@config/client';
+import { properties } from '@config/properties';
 import ExchangeRateModel, { ExchangeRate } from '@models/exchangeRate.model';
 import {
   formatPrice,
   getExchangeRateQueryData,
   getLocalDate,
+  getMean,
+  getStandardDeviation,
   TradeType,
 } from '@utils/index';
 import logger from '@utils/logger';
@@ -44,14 +47,18 @@ export const saveExchangeRateEntry = async (
   logger.info(`Exchange Rate entry saved successfully`);
 };
 
-export const checkHigh = async () => {
-  const entries = await ExchangeRateModel.find()
+export const checkHigh = async (): Promise<number | null> => {
+  const k = properties.app.rateK;
+  const windowSize = properties.app.rateWindowSize;
+  const docs = await ExchangeRateModel.find()
     .sort({ timestamp: -1 })
-    .limit(5);
-  console.log('🚀 ~ checkHigh ~ entries:', entries);
-  entries.map((entry) => {
-    console.log(`${entry.rate} on ${getLocalDate(entry.timestamp)}`);
-  });
+    .limit(windowSize)
+    .exec();
+  const entries = docs.map((doc) => doc.toObject());
+  const rates: number[] = entries.map((entry) => entry.rate);
+  const currentPrice = rates.pop()!;
+  const mean = getMean(rates);
+  const standardDeviation = getStandardDeviation(rates);
+  const threshold = mean + k * standardDeviation;
+  return currentPrice > threshold ? currentPrice : null;
 };
-
-// checkHigh();

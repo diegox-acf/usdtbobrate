@@ -15,7 +15,7 @@ const startServer = async () => {
     await connectDB();
 
     app.listen(PORT, properties.app.host, () => {
-      logger.info(`Server running on : ${HOST}:${PORT}`);
+      logger.info(`Server running on: ${HOST}:${PORT}`);
     });
     startJobScheduler();
   } catch (error) {

@@ -1,3 +1,4 @@
+import telegramBot from '@config/telegramBot';
 import TelegramUserModel, { TelegramUser } from '@models/telegramUser.model';
 import logger from '@utils/logger';
 import { Document } from 'mongoose';
@@ -33,12 +34,24 @@ const deleteUser = async (user: TelegramUser): Promise<Document | null> => {
   }).exec();
 };
 
+const sendAlerts = async (highRate: number) => {
+  const docs = await TelegramUserModel.find();
+  const subscribedUsers = docs.map((doc) => doc.toObject());
+  subscribedUsers.forEach((subscribedUser) => {
+    telegramBot.sendMessage(
+      subscribedUser.chatId,
+      `Alerta de precio alto: ${highRate}`
+    );
+  });
+};
+
 const TelegramUserService = {
   saveUser,
   getUserByChatId,
   getAllUsers,
   updateUser,
   deleteUser,
+  sendAlerts,
 };
 
 export default TelegramUserService;

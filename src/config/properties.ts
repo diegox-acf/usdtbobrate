@@ -11,6 +11,8 @@ export const properties = {
     port: PORT,
     host: HOST,
     logLevel: LOG_LEVEL,
+    rateWindowSize: 5,
+    rateK: 4,
   },
   mongo: {
     uri: MONGODB_URI,
