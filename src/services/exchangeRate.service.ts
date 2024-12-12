@@ -12,7 +12,7 @@ import {
 import logger from '@utils/logger';
 
 export const getExchangeRateHistory = async (): Promise<ExchangeRate[]> => {
-  return await ExchangeRateModel.find();
+  return await ExchangeRateModel.find().exec();
 };
 
 export const generateExchangeRateHistoryEntry = async (

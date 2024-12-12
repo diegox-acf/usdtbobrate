@@ -11,31 +11,40 @@ const saveUser = async (userData: TelegramUser): Promise<void> => {
   );
 };
 
-const getUserByChatId = async (chatId: string): Promise<Document | null> => {
+const getUserByChatId = async (
+  chatId: string
+): Promise<Document<unknown, {}, TelegramUser> | null> => {
   return await TelegramUserModel.findOne({ chatId }).exec();
 };
 
-const getAllUsers = async (): Promise<Document[]> => {
+const getAllUsers = async (): Promise<
+  Document<unknown, {}, TelegramUser>[]
+> => {
   return await TelegramUserModel.find({}).exec();
 };
 
 const updateUser = async (
   chatId: string,
   updateData: Partial<TelegramUser>
-): Promise<Document | null> => {
+): Promise<Document<unknown, {}, TelegramUser> | null> => {
   return await TelegramUserModel.findOneAndUpdate({ chatId }, updateData, {
     new: true,
   }).exec();
 };
 
-const deleteUser = async (user: TelegramUser): Promise<Document | null> => {
+const deleteUser = async (
+  user: TelegramUser
+): Promise<Document<unknown, {}, TelegramUser> | null> => {
   return await TelegramUserModel.findOneAndDelete({
     chatId: user.chatId,
   }).exec();
 };
 
 const sendAlerts = async (highRate: number) => {
-  const docs = await TelegramUserModel.find();
+  logger.info(
+    `High rate detected: ${highRate}. Sending alerts to subscribed users...`
+  );
+  const docs = await getAllUsers();
   const subscribedUsers = docs.map((doc) => doc.toObject());
   subscribedUsers.forEach((subscribedUser) => {
     telegramBot.sendMessage(
