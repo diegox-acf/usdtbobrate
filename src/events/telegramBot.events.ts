@@ -1,18 +1,14 @@
-import { properties } from '@config/properties';
 import { ExchangeRate } from '@models/exchangeRate.model';
 import { TelegramUser } from '@models/telegramUser.model';
 import { generateExchangeRateHistoryEntry } from '@services/exchangeRate.service';
 import TelegramUserService from '@services/telegramUser.service';
 import { formatPrice } from '@utils/index';
 
-import TelegramBot, { Message } from 'node-telegram-bot-api';
+import { Message } from 'node-telegram-bot-api';
+import telegramBot from '@config/telegramBot';
 
-const bot: TelegramBot = new TelegramBot(properties.telegram.botToken, {
-  polling: true,
-});
-
-bot.onText(/\/start/, (msg: Message) => {
-  bot.sendMessage(msg.chat.id, 'Welcome', {
+telegramBot.onText(/\/start/, (msg: Message) => {
+  telegramBot.sendMessage(msg.chat.id, 'Welcome', {
     reply_markup: {
       keyboard: [
         [{ text: '/subscribe' }, { text: '/unsubscribe' }],
@@ -23,59 +19,62 @@ bot.onText(/\/start/, (msg: Message) => {
   });
 });
 
-bot.onText(/\/subscribe/, async (msg: Message) => {
+telegramBot.onText(/\/subscribe/, async (msg: Message) => {
   const chatId = msg.chat.id;
   try {
     const telegramUser: TelegramUser = { chatId };
     await TelegramUserService.saveUser(telegramUser);
-    bot.sendMessage(
+    telegramBot.sendMessage(
       chatId,
       'Te subscribiste a las notificationes en tiempo real'
     );
   } catch (error: any) {
     if (error.code === 11000) {
-      bot.sendMessage(chatId, 'Ya estas subscrito');
+      telegramBot.sendMessage(chatId, 'Ya estas subscrito');
     } else {
-      bot.sendMessage(chatId, 'Ocurrion un error al momento del registro');
+      telegramBot.sendMessage(
+        chatId,
+        'Ocurrion un error al momento del registro'
+      );
     }
   }
 });
 
-bot.onText(/\/unsubscribe/, async (msg) => {
+telegramBot.onText(/\/unsubscribe/, async (msg) => {
   const chatId = msg.chat.id;
   try {
     const telegramUser: TelegramUser = { chatId };
     await TelegramUserService.deleteUser(telegramUser);
-    bot.sendMessage(msg.chat.id, 'Te hecharemos de menos 😞');
+    telegramBot.sendMessage(msg.chat.id, 'Te hecharemos de menos 😞');
   } catch (error) {
-    bot.sendMessage(chatId, 'Ocurrio un error');
+    telegramBot.sendMessage(chatId, 'Ocurrio un error');
   }
 });
 
-bot.onText(/\/sell/, async (msg: Message) => {
+telegramBot.onText(/\/sell/, async (msg: Message) => {
   const chatId = msg.chat.id;
   try {
     const exchangeRate: ExchangeRate =
       await generateExchangeRateHistoryEntry('SELL');
-    bot.sendMessage(
+    telegramBot.sendMessage(
       chatId,
       `El tipo de cambio para la venta es: ${formatPrice(exchangeRate.rate)}`
     );
   } catch (error: any) {
-    bot.sendMessage(chatId, 'Ocurrio un error');
+    telegramBot.sendMessage(chatId, 'Ocurrio un error');
   }
 });
 
-bot.onText(/\/buy/, async (msg: Message) => {
+telegramBot.onText(/\/buy/, async (msg: Message) => {
   const chatId = msg.chat.id;
   try {
     const exchangeRate: ExchangeRate =
       await generateExchangeRateHistoryEntry('BUY');
-    bot.sendMessage(
+    telegramBot.sendMessage(
       chatId,
       `El tipo de cambio para la compra es: ${formatPrice(exchangeRate.rate)}`
     );
   } catch (error: any) {
-    bot.sendMessage(chatId, 'Ocurrio un error');
+    telegramBot.sendMessage(chatId, 'Ocurrio un error');
   }
 });

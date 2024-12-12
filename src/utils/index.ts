@@ -37,3 +37,17 @@ export const getLocalDate = (timestamp: number): string => {
 export const formatPrice = (price: number): string => {
   return price.toFixed(2);
 };
+
+export const getMean = (data: number[]): number => {
+  const sum = data.reduce((acc, value) => acc + value, 0);
+  return sum / data.length;
+};
+
+export const getStandardDeviation = (data: number[]): number => {
+  const mean = getMean(data);
+  const squareDiffSum = data.reduce(
+    (acc, value) => acc + Math.pow(value - mean, 2),
+    0
+  );
+  return Math.sqrt(squareDiffSum / data.length);
+};
