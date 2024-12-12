@@ -31,4 +31,4 @@ jobs:
     - name: Build the project
       run: pnpm build
     - name: Restart pm2
-      run: pm2 restart
+      run: pm2 restart usdt-bob-rates-app
