@@ -19,7 +19,7 @@ const startServer = async () => {
     });
     startJobScheduler();
   } catch (error) {
-    logger.error('Unable to start the server');
+    logger.error(error);
     process.exit(1);
   }
 };
