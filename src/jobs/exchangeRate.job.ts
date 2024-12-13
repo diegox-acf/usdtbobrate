@@ -9,7 +9,7 @@ import { getLocalDate } from '@utils/index';
 import { properties } from '@config/properties';
 import TelegramUserService from '@services/telegramUser.service';
 export const startJobScheduler = () => {
-  cron.schedule(properties.job.cronExpresion, async () => {
+  cron.schedule(properties.job.cronExpression, async () => {
     logger.info(
       `Generating exchangeRate history entry on ${getLocalDate(new Date().getTime())}`
     );
