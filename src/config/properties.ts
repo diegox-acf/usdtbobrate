@@ -25,7 +25,7 @@ export const properties = {
     apiURL: 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search',
   },
   job: {
-    cronExpresion: "'*/10 * * * *'",
+    cronExpression: '0 * * * *',
   },
 };
 
