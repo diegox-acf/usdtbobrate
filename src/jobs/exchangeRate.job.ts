@@ -7,7 +7,7 @@ import cron from 'node-cron';
 import ExchangeRateModel, { ExchangeRate } from '@models/exchangeRate.model';
 import { getLocalDate } from '@utils/index';
 import { properties } from '@config/properties';
-import TelegramUserService from '@services/telegramUser.service';
+import { sendAlerts } from '@services/telegramUser.service';
 export const startJobScheduler = () => {
   cron.schedule(properties.job.cronExpression, async () => {
     logger.info(
@@ -20,7 +20,7 @@ export const startJobScheduler = () => {
     logger.info('Exchange rate entry generated and saved succesfully');
     const highRate = await checkHigh();
     if (highRate) {
-      TelegramUserService.sendAlerts(highRate);
+      sendAlerts(highRate);
     }
   });
 };

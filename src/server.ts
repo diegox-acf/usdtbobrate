@@ -17,9 +17,10 @@ const startServer = async () => {
     app.listen(PORT, properties.app.host, () => {
       logger.info(`Server running on: ${HOST}:${PORT}`);
     });
+
     startJobScheduler();
   } catch (error) {
-    logger.error(error);
+    logger.error('Unable to start the server', error);
     process.exit(1);
   }
 };

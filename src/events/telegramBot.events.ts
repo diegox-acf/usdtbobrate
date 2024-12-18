@@ -1,11 +1,11 @@
 import { ExchangeRate } from '@models/exchangeRate.model';
 import { TelegramUser } from '@models/telegramUser.model';
 import { generateExchangeRateHistoryEntry } from '@services/exchangeRate.service';
-import TelegramUserService from '@services/telegramUser.service';
 import { formatPrice } from '@utils/index';
 
 import { Message } from 'node-telegram-bot-api';
 import telegramBot from '@config/telegramBot';
+import { deleteUser, saveUser } from '@services/telegramUser.service';
 
 telegramBot.onText(/\/start/, (msg: Message) => {
   telegramBot.sendMessage(msg.chat.id, 'Welcome', {
@@ -23,7 +23,7 @@ telegramBot.onText(/\/subscribe/, async (msg: Message) => {
   const chatId = msg.chat.id;
   try {
     const telegramUser: TelegramUser = { chatId };
-    await TelegramUserService.saveUser(telegramUser);
+    await saveUser(telegramUser);
     telegramBot.sendMessage(
       chatId,
       'Te subscribiste a las notificationes en tiempo real'
@@ -44,7 +44,7 @@ telegramBot.onText(/\/unsubscribe/, async (msg) => {
   const chatId = msg.chat.id;
   try {
     const telegramUser: TelegramUser = { chatId };
-    await TelegramUserService.deleteUser(telegramUser);
+    await deleteUser(telegramUser);
     telegramBot.sendMessage(msg.chat.id, 'Te hecharemos de menos 😞');
   } catch (error) {
     telegramBot.sendMessage(chatId, 'Ocurrio un error');

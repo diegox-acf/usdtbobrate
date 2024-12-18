@@ -49,16 +49,23 @@ export const saveExchangeRateEntry = async (
 
 export const checkHigh = async (): Promise<number | null> => {
   const k = properties.app.rateK;
+  logger.debug(`k: ${k}`);
   const windowSize = properties.app.rateWindowSize;
+  logger.debug(`windowSize: ${windowSize}`);
   const docs = await ExchangeRateModel.find()
     .sort({ timestamp: -1 })
     .limit(windowSize)
     .exec();
   const entries = docs.map((doc) => doc.toObject());
   const rates: number[] = entries.map((entry) => entry.rate);
+  logger.debug(`rates: ${rates}`);
   const currentPrice = rates.pop()!;
+  logger.debug(`currentPrice: ${currentPrice}`);
   const mean = getMean(rates);
+  logger.debug(`mean: ${mean}`);
   const standardDeviation = getStandardDeviation(rates);
+  logger.debug(`standardDeviation: ${standardDeviation}`);
   const threshold = mean + k * standardDeviation;
+  logger.debug(`threshold: ${k}`);
   return currentPrice > threshold ? currentPrice : null;
 };

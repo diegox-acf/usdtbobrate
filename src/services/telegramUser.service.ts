@@ -1,9 +1,10 @@
 import telegramBot from '@config/telegramBot';
 import TelegramUserModel, { TelegramUser } from '@models/telegramUser.model';
+import { formatPrice } from '@utils/index';
 import logger from '@utils/logger';
 import { Document } from 'mongoose';
 
-const saveUser = async (userData: TelegramUser): Promise<void> => {
+export const saveUser = async (userData: TelegramUser): Promise<void> => {
   const telegramUser = new TelegramUserModel(userData);
   await telegramUser.save();
   logger.info(
@@ -11,19 +12,19 @@ const saveUser = async (userData: TelegramUser): Promise<void> => {
   );
 };
 
-const getUserByChatId = async (
+export const getUserByChatId = async (
   chatId: string
 ): Promise<Document<unknown, {}, TelegramUser> | null> => {
   return await TelegramUserModel.findOne({ chatId }).exec();
 };
 
-const getAllUsers = async (): Promise<
+export const getAllUsers = async (): Promise<
   Document<unknown, {}, TelegramUser>[]
 > => {
   return await TelegramUserModel.find({}).exec();
 };
 
-const updateUser = async (
+export const updateUser = async (
   chatId: string,
   updateData: Partial<TelegramUser>
 ): Promise<Document<unknown, {}, TelegramUser> | null> => {
@@ -32,7 +33,7 @@ const updateUser = async (
   }).exec();
 };
 
-const deleteUser = async (
+export const deleteUser = async (
   user: TelegramUser
 ): Promise<Document<unknown, {}, TelegramUser> | null> => {
   return await TelegramUserModel.findOneAndDelete({
@@ -40,7 +41,7 @@ const deleteUser = async (
   }).exec();
 };
 
-const sendAlerts = async (highRate: number) => {
+export const sendAlerts = async (highRate: number) => {
   logger.info(
     `High rate detected: ${highRate}. Sending alerts to subscribed users...`
   );
@@ -49,18 +50,7 @@ const sendAlerts = async (highRate: number) => {
   subscribedUsers.forEach((subscribedUser) => {
     telegramBot.sendMessage(
       subscribedUser.chatId,
-      `Alerta de precio alto: ${highRate}`
+      `Alerta de de subida de precio: ${formatPrice(highRate)}`
     );
   });
 };
-
-const TelegramUserService = {
-  saveUser,
-  getUserByChatId,
-  getAllUsers,
-  updateUser,
-  deleteUser,
-  sendAlerts,
-};
-
-export default TelegramUserService;
