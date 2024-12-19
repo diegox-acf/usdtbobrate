@@ -1,3 +1,4 @@
+import logger from '@utils/logger';
 import { z } from 'zod';
 
 const envSchema = z.object({
@@ -15,7 +16,7 @@ const envSchema = z.object({
 const { success, error, data } = envSchema.safeParse(process.env);
 
 if (!success) {
-  console.error('❌ Error when reading environment variables:', error.format());
+  logger.error('❌ Error when reading environment variables:', error.format());
   process.exit(1);
 }
 

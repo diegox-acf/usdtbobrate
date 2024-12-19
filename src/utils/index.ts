@@ -53,6 +53,5 @@ export const getStandardDeviation = (data: number[]): number => {
 };
 
 export const round2Decimals = (value: number): number => {
-  console.log('🚀 ~ round2Decimals ~ value:', value);
   return Math.round(value * 100) / 100;
 };
