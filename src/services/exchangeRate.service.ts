@@ -30,15 +30,18 @@ export const generateExchangeRateHistoryEntry = async (
     (acc: any, cur: any) => acc + cur,
     0
   );
+  console.log('🚀 ~ exchangeRatePriceSum:', exchangeRatePriceSum);
 
   const exchangeRatePrice = round2Decimals(
     exchangeRatePriceSum / prices.length
   );
+  console.log('🚀 ~ exchangeRatePrice:', exchangeRatePrice);
 
   const exchangeRate: ExchangeRate = {
     rate: exchangeRatePrice,
     timestamp: new Date().getTime(),
   };
+  console.log('🚀 ~ exchangeRate:', exchangeRate);
   logger.info(
     `Exchange rate entry with price: ${formatPrice(exchangeRate.rate)} generated on ${getLocalDate(exchangeRate.timestamp)}`
   );

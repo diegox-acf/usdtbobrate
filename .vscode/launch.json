@@ -7,7 +7,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug typescript",
+      "name": "Debug app",
       "program": "${workspaceFolder}/src/app.ts",
       "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register"],
       "console": "integratedTerminal",
