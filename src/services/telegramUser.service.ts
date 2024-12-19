@@ -50,7 +50,7 @@ export const sendAlerts = async (highRate: number) => {
   subscribedUsers.forEach((subscribedUser) => {
     telegramBot.sendMessage(
       subscribedUser.chatId,
-      `Alerta de de subida de precio: ${formatPrice(highRate)}`
+      `Alerta de precio alto: ${formatPrice(highRate)}`
     );
   });
 };

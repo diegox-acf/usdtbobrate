@@ -1,5 +1,5 @@
 import {
-  checkHigh,
+  checkHighExchangeRateIncrease,
   generateExchangeRateHistoryEntry,
 } from '@services/exchangeRate.service';
 import logger from '@utils/logger';
@@ -18,9 +18,9 @@ export const startJobScheduler = () => {
     const newExchangeRateEntry = new ExchangeRateModel(exchangeRateEntry);
     await newExchangeRateEntry.save();
     logger.info('Exchange rate entry generated and saved succesfully');
-    const highRate = await checkHigh();
-    if (highRate) {
-      sendAlerts(highRate);
+    const highExchangeRate = await checkHighExchangeRateIncrease();
+    if (highExchangeRate) {
+      sendAlerts(highExchangeRate);
     }
   });
 };
