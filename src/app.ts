@@ -6,6 +6,6 @@ const app = express();
 
 app.use(express.json());
 
-app.use('/api/exchange-rate', exchangeRateRoutes);
+app.use('/api/exchange-rates', exchangeRateRoutes);
 
 export default app;

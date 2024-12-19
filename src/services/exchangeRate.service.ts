@@ -7,6 +7,7 @@ import {
   getLocalDate,
   getMean,
   getStandardDeviation,
+  round2Decimals,
   TradeType,
 } from '@utils/index';
 import logger from '@utils/logger';
@@ -22,13 +23,18 @@ export const generateExchangeRateHistoryEntry = async (
 
   const prices = response.data.data
     .filter((item: any) => item.advertiser.monthOrderCount > 0)
-    .map((item: any) => +item.adv.price);
+    .map((item: any) => +item.adv.price) as number[];
   logger.debug(`List of prices on ${new Date().toISOString()}: ${prices}`);
-  const exchangeRatePriceSum = prices.reduce(
+
+  const exchangeRatePriceSum = prices.reduce<number>(
     (acc: any, cur: any) => acc + cur,
     0
   );
-  const exchangeRatePrice = exchangeRatePriceSum / prices.length;
+
+  const exchangeRatePrice = round2Decimals(
+    exchangeRatePriceSum / prices.length
+  );
+
   const exchangeRate: ExchangeRate = {
     rate: exchangeRatePrice,
     timestamp: new Date().getTime(),
@@ -47,10 +53,11 @@ export const saveExchangeRateEntry = async (
   logger.info(`Exchange Rate entry saved successfully`);
 };
 
-export const checkHigh = async (): Promise<number | null> => {
-  const k = properties.app.rateK;
-  logger.debug(`k: ${k}`);
-  const windowSize = properties.app.rateWindowSize;
+export const checkHighExchangeRateIncrease = async (): Promise<
+  number | null
+> => {
+  const threshold = properties.exchangeRate.threshold;
+  const windowSize = properties.exchangeRate.rateWindowSize;
   logger.debug(`windowSize: ${windowSize}`);
   const docs = await ExchangeRateModel.find()
     .sort({ timestamp: -1 })
@@ -58,14 +65,27 @@ export const checkHigh = async (): Promise<number | null> => {
     .exec();
   const entries = docs.map((doc) => doc.toObject());
   const rates: number[] = entries.map((entry) => entry.rate);
+
   logger.debug(`rates: ${rates}`);
-  const currentPrice = rates.pop()!;
-  logger.debug(`currentPrice: ${currentPrice}`);
-  const mean = getMean(rates);
-  logger.debug(`mean: ${mean}`);
-  const standardDeviation = getStandardDeviation(rates);
-  logger.debug(`standardDeviation: ${standardDeviation}`);
-  const threshold = mean + k * standardDeviation;
-  logger.debug(`threshold: ${k}`);
-  return currentPrice > threshold ? currentPrice : null;
+  let acc = 0;
+  let max = -1;
+  let first = true;
+  for (let i = rates.length - 1; i > 0; i--) {
+    const diff = rates[i] - rates[i - 1];
+    if (acc + diff > 0) {
+      acc = acc + diff;
+      max = Math.max(acc, max);
+    } else {
+      acc = 0;
+      if (first) {
+        return null;
+      }
+    }
+    first = false;
+    if (max > threshold) {
+      logger.debug(`max: ${max}`);
+      return rates[rates.length - 1];
+    }
+  }
+  return null;
 };

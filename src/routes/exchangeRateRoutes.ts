@@ -1,8 +1,8 @@
+import { getExchangeRateHistory } from '@controllers/exchangeRate.controller';
 import { Router } from 'express';
-import exchangeRateController from '@controllers/exchangeRate.controller';
 
 const router = Router();
 
-router.get('/history', exchangeRateController.getExchangeRateHistory);
+router.get('/', getExchangeRateHistory);
 
 export default router;

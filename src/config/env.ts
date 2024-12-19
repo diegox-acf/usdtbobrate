@@ -7,6 +7,9 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['prod', 'dev']).default('dev'),
   LOG_LEVEL: z.string().default('info'),
   TELEGRAM_BOT_TOKEN: z.string().min(1, 'Missing Telegram Bot Token'),
+  RATE_WINDOW_SIZE: z.string().default('6'),
+  RATE_THRESHOLD: z.string().default('0.25'),
+  RATE_CRONJOB_EXPRESSION: z.string().default('*/30 * * * *'),
 });
 
 const { success, error, data } = envSchema.safeParse(process.env);
@@ -23,4 +26,7 @@ export const {
   LOG_LEVEL,
   TELEGRAM_BOT_TOKEN,
   HOST,
+  RATE_CRONJOB_EXPRESSION,
+  RATE_THRESHOLD,
+  RATE_WINDOW_SIZE,
 } = data;

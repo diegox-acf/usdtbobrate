@@ -51,3 +51,7 @@ export const getStandardDeviation = (data: number[]): number => {
   );
   return Math.sqrt(squareDiffSum / data.length);
 };
+
+export const round2Decimals = (value: number): number => {
+  return Math.round((value * 100) / 100);
+};

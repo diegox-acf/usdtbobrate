@@ -1,9 +1,12 @@
 import {
+  RATE_CRONJOB_EXPRESSION,
   HOST,
   LOG_LEVEL,
   MONGODB_URI,
   PORT,
   TELEGRAM_BOT_TOKEN,
+  RATE_THRESHOLD,
+  RATE_WINDOW_SIZE,
 } from '@config/env';
 
 export const properties = {
@@ -11,8 +14,6 @@ export const properties = {
     port: PORT,
     host: HOST,
     logLevel: LOG_LEVEL,
-    rateWindowSize: 5,
-    rateK: 4,
   },
   mongo: {
     uri: MONGODB_URI,
@@ -23,9 +24,11 @@ export const properties = {
   },
   exchangeRate: {
     apiURL: 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search',
+    rateWindowSize: +RATE_WINDOW_SIZE,
+    threshold: +RATE_THRESHOLD,
   },
   job: {
-    cronExpression: '0 * * * *',
+    cronExpression: RATE_CRONJOB_EXPRESSION,
   },
 };
 
