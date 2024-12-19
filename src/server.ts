@@ -12,10 +12,6 @@ const HOST = properties.app.host;
 
 const startServer = async () => {
   try {
-    logger.debug(
-      'Starting server with properties:',
-      JSON.stringify(properties, null, 2)
-    );
     await connectDB();
 
     app.listen(PORT, HOST, () => {
