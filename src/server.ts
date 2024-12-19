@@ -12,9 +12,14 @@ const HOST = properties.app.host;
 
 const startServer = async () => {
   try {
+    logger.debug('Starting server with properties:', {
+      ...properties.app,
+      ...properties.exchangeRate,
+      ...properties.job,
+    });
     await connectDB();
 
-    app.listen(PORT, properties.app.host, () => {
+    app.listen(PORT, HOST, () => {
       logger.info(`Server running on: ${HOST}:${PORT}`);
     });
 
