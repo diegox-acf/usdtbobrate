@@ -1,16 +1,32 @@
 import client from '@config/client';
 import { properties } from '@config/properties';
+import { getPrevNextStep, setPrevNextStep } from '@config/step';
 import ExchangeRateModel, { ExchangeRate } from '@models/exchangeRate.model';
 import {
   formatPrice,
   getExchangeRateQueryData,
   getLocalDate,
-  getMean,
-  getStandardDeviation,
-  round2Decimals,
+  round,
   TradeType,
 } from '@utils/index';
 import logger from '@utils/logger';
+
+export const getLastExchangeRateHistory = async (): Promise<ExchangeRate> => {
+  const lastExchangeRate = await ExchangeRateModel.findOne().exec();
+  if (!lastExchangeRate) {
+    throw new Error('Exchange rate history not found');
+  }
+  return lastExchangeRate;
+};
+
+export const getStepRates = async (): Promise<{
+  prev: number;
+  next: number;
+}> => {
+  const lastEntry = await getLastExchangeRateHistory();
+  const lastRate = lastEntry.rate;
+  return calculatePrevNext(lastRate);
+};
 
 export const getExchangeRateHistory = async (): Promise<ExchangeRate[]> => {
   return await ExchangeRateModel.find().exec();
@@ -31,9 +47,7 @@ export const generateExchangeRateHistoryEntry = async (
     0
   );
 
-  const exchangeRatePrice = round2Decimals(
-    exchangeRatePriceSum / prices.length
-  );
+  const exchangeRatePrice = round(exchangeRatePriceSum / prices.length);
 
   const exchangeRate: ExchangeRate = {
     rate: exchangeRatePrice,
@@ -53,6 +67,23 @@ export const saveExchangeRateEntry = async (
   logger.info(`Exchange Rate entry saved successfully`);
 };
 
+export const checkUpperStepReached = (current: number): boolean => {
+  const { prev, next } = getPrevNextStep();
+  setPrevNextStep(calculatePrevNext(current));
+  return current > next;
+};
+
+export const calculatePrevNext = (
+  value: number
+): { prev: number; next: number } => {
+  const prev = Math.floor(value / 0.25) * 0.25;
+  let next = Math.ceil(value / 0.25) * 0.25;
+
+  if (value === prev) {
+    next = next + 0.25;
+  }
+  return { prev, next };
+};
 export const checkHighExchangeRateIncrease = async (): Promise<
   number | null
 > => {

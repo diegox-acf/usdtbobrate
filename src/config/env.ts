@@ -15,7 +15,7 @@ const envSchema = z.object({
 const { success, error, data } = envSchema.safeParse(process.env);
 
 if (!success) {
-  console.error('❌ Error when reading environment variables:', error.format());
+  console.error('Error when reading environment variables:', error.format());
   process.exit(1);
 }
 
