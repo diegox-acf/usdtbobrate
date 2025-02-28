@@ -41,7 +41,7 @@ export const deleteUser = async (
   }).exec();
 };
 
-export const sendAlerts = async (highRate: number) => {
+export const sendAlerts = async (highRate: number, message = '') => {
   logger.info(
     `High rate detected: ${highRate}. Sending alerts to subscribed users...`
   );
@@ -50,7 +50,7 @@ export const sendAlerts = async (highRate: number) => {
   subscribedUsers.forEach((subscribedUser) => {
     telegramBot.sendMessage(
       subscribedUser.chatId,
-      `Alerta de precio alto: ${formatPrice(highRate)}`
+      message ? message : `Alerta de precio alto: ${formatPrice(highRate)}`
     );
   });
 };

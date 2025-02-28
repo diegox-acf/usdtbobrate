@@ -29,7 +29,8 @@ export const startJobScheduler = () => {
     }
     const stepReached = checkUpperStepReached(exchangeRateEntry.rate);
     if (stepReached) {
-      sendAlerts(exchangeRateEntry.rate);
+      const message = `El precio llego a ${exchangeRateEntry.rate}`;
+      sendAlerts(exchangeRateEntry.rate, message);
     }
   });
 };

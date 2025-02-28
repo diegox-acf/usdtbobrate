@@ -76,14 +76,15 @@ export const checkUpperStepReached = (current: number): boolean => {
 export const calculatePrevNext = (
   value: number
 ): { prev: number; next: number } => {
-  const prev = Math.floor(value / 0.25) * 0.25;
-  let next = Math.ceil(value / 0.25) * 0.25;
+  const prev = Math.floor(value / 0.1) * 0.1;
+  let next = Math.ceil(value / 0.1) * 0.1;
 
   if (value === prev) {
-    next = next + 0.25;
+    next = next + 0.1;
   }
   return { prev, next };
 };
+
 export const checkHighExchangeRateIncrease = async (): Promise<
   number | null
 > => {
