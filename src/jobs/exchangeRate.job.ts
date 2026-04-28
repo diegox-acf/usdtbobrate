@@ -1,9 +1,10 @@
 import { properties } from '@config/properties';
-import ExchangeRateModel, { ExchangeRate } from '@models/exchangeRate.model';
+import { ExchangeRate } from '@models/exchangeRate.model';
 import {
   checkHighExchangeRateIncrease,
   checkUpperStepReached,
   generateExchangeRateHistoryEntry,
+  saveExchangeRateEntry,
 } from '@services/exchangeRate.service';
 
 import { sendAlerts } from '@services/telegramUser.service';
@@ -19,9 +20,7 @@ export const startJobScheduler = () => {
     const exchangeRateEntry: ExchangeRate =
       await generateExchangeRateHistoryEntry('SELL');
 
-    const newExchangeRateEntry = new ExchangeRateModel(exchangeRateEntry);
-    await newExchangeRateEntry.save();
-    logger.info('Exchange rate entry generated and saved succesfully');
+    await saveExchangeRateEntry(exchangeRateEntry);
 
     const highExchangeRate = await checkHighExchangeRateIncrease();
     if (highExchangeRate) {

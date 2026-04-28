@@ -12,7 +12,9 @@ import {
 import logger from '@utils/logger';
 
 export const getLastExchangeRateHistory = async (): Promise<ExchangeRate> => {
-  const lastExchangeRate = await ExchangeRateModel.findOne().exec();
+  const lastExchangeRate = await ExchangeRateModel.findOne()
+    .sort({ timestamp: -1 })
+    .exec();
   if (!lastExchangeRate) {
     throw new Error('Exchange rate history not found');
   }
@@ -67,22 +69,30 @@ export const saveExchangeRateEntry = async (
   logger.info(`Exchange Rate entry saved successfully`);
 };
 
-export const checkUpperStepReached = (current: number): boolean => {
-  const { prev, next } = getPrevNextStep();
-  setPrevNextStep(calculatePrevNext(current));
-  return current > next;
-};
-
 export const calculatePrevNext = (
   value: number
 ): { prev: number; next: number } => {
-  const prev = Math.floor(value / 0.1) * 0.1;
-  let next = Math.ceil(value / 0.1) * 0.1;
+  // Use integer math to avoid floating-point issues (e.g. 6.9/0.1 = 68.999...)
+  const prevInt = Math.floor(Math.round(value * 100) / 10);
+  return { prev: prevInt / 10, next: (prevInt + 1) / 10 };
+};
 
-  if (value === prev) {
-    next = next + 0.1;
+export const checkUpperStepReached = (current: number): boolean => {
+  const { next } = getPrevNextStep();
+  setPrevNextStep(calculatePrevNext(current));
+  return current >= next;
+};
+
+// Exported for unit testing — Kadane's algorithm on newest-first rate array
+export const computeMaxIncrease = (rates: number[]): number => {
+  let maxIncrease = 0;
+  let running = 0;
+  for (let i = rates.length - 1; i > 0; i--) {
+    const diff = rates[i - 1] - rates[i]; // newer - older (positive when price rises)
+    running = Math.max(0, running + diff);
+    maxIncrease = Math.max(maxIncrease, running);
   }
-  return { prev, next };
+  return maxIncrease;
 };
 
 export const checkHighExchangeRateIncrease = async (): Promise<
@@ -91,33 +101,22 @@ export const checkHighExchangeRateIncrease = async (): Promise<
   const threshold = properties.exchangeRate.threshold;
   const windowSize = properties.exchangeRate.rateWindowSize;
   logger.debug(`windowSize: ${windowSize}`);
+
   const docs = await ExchangeRateModel.find()
     .sort({ timestamp: -1 })
     .limit(windowSize)
     .exec();
-  const entries = docs.map((doc) => doc.toObject());
-  const rates: number[] = entries.map((entry) => entry.rate);
 
+  if (docs.length < 2) return null;
+
+  // rates[0] = newest, rates[n-1] = oldest
+  const rates = docs.map((doc) => doc.rate);
   logger.debug(`rates: ${rates}`);
-  let acc = 0;
-  let max = -1;
-  let first = true;
-  for (let i = rates.length - 1; i > 0; i--) {
-    const diff = rates[i] - rates[i - 1];
-    if (acc + diff > 0) {
-      acc = acc + diff;
-      max = Math.max(acc, max);
-    } else {
-      acc = 0;
-      if (first) {
-        return null;
-      }
-    }
-    first = false;
-    if (max > threshold) {
-      logger.debug(`max: ${max}`);
-      return rates[rates.length - 1];
-    }
+
+  const maxIncrease = computeMaxIncrease(rates);
+  logger.debug(`maxIncrease: ${maxIncrease}`);
+  if (maxIncrease >= threshold) {
+    return rates[0]; // return the current (newest) rate
   }
   return null;
 };
