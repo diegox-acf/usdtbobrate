@@ -1,8 +1,10 @@
 import mongoose, { Schema } from 'mongoose';
+import { TradeType } from '@utils/index';
 
 export interface ExchangeRate {
   timestamp: number;
   rate: number;
+  tradeType: TradeType;
 }
 
 const exchangeRateSchema = new Schema<ExchangeRate>({
@@ -12,6 +14,11 @@ const exchangeRateSchema = new Schema<ExchangeRate>({
   },
   rate: {
     type: Number,
+    required: true,
+  },
+  tradeType: {
+    type: String,
+    enum: ['SELL', 'BUY'],
     required: true,
   },
 });

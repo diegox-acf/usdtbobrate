@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface TelegramUser {
   chatId: number;
+  targetPrice?: number;
 }
 
 const telegramUserSchema = new Schema<TelegramUser>({
@@ -9,6 +10,10 @@ const telegramUserSchema = new Schema<TelegramUser>({
     type: Number,
     required: true,
     unique: true,
+  },
+  targetPrice: {
+    type: Number,
+    required: false,
   },
 });
 

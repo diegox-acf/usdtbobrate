@@ -56,3 +56,10 @@ export const round = (value: number, scale: number = 2): number => {
   const digits = Math.pow(10, scale);
   return Math.round(value * digits) / digits;
 };
+
+export const formatTrend = (current: number, previous: number): string => {
+  const diff = round(current - previous, 2);
+  if (diff > 0) return `↑ +${formatPrice(diff)}`;
+  if (diff < 0) return `↓ ${formatPrice(diff)}`;
+  return `→ ${formatPrice(0)}`;
+};
