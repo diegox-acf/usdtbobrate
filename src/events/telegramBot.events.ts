@@ -40,11 +40,28 @@ const settingsMenuKeyboard = (user: TelegramUser) => {
   const highRateEnabled = user.alertHighRateEnabled !== false;
   return {
     inline_keyboard: [
-      [{ text: `${stepEnabled ? '✅' : '❌'} Alertas de paso`, callback_data: 'toggle_step' }],
-      [{ text: `${highRateEnabled ? '✅' : '❌'} Alertas de precio alto`, callback_data: 'toggle_high_rate' }],
+      [
+        {
+          text: `${stepEnabled ? '✅' : '❌'} Alertas de cambio de precio`,
+          callback_data: 'toggle_step',
+        },
+      ],
+      [
+        {
+          text: `${highRateEnabled ? '✅' : '❌'} Alertas de precio alto`,
+          callback_data: 'toggle_high_rate',
+        },
+      ],
       [{ text: '🎯 Establecer precio objetivo', callback_data: 'set_target' }],
       ...(user.targetPrice
-        ? [[{ text: `🗑️ Quitar objetivo (${formatPrice(user.targetPrice)})`, callback_data: 'clear_target' }]]
+        ? [
+            [
+              {
+                text: `🗑️ Quitar objetivo (${formatPrice(user.targetPrice)})`,
+                callback_data: 'clear_target',
+              },
+            ],
+          ]
         : []),
       [{ text: '🔙 Volver', callback_data: 'main_menu' }],
     ],
@@ -69,7 +86,10 @@ telegramBot.onText(/\/settings/, async (msg: Message) => {
   const chatId = msg.chat.id;
   const doc = await getUserByChatId(String(chatId));
   if (!doc) {
-    telegramBot.sendMessage(chatId, 'Primero debes suscribirte con /subscribe o desde el menú.');
+    telegramBot.sendMessage(
+      chatId,
+      'Primero debes suscribirte con /subscribe o desde el menú.'
+    );
     return;
   }
   telegramBot.sendMessage(chatId, '⚙️ Configuración', {
@@ -80,14 +100,20 @@ telegramBot.onText(/\/settings/, async (msg: Message) => {
 telegramBot.onText(/\/subscribe/, async (msg: Message) => {
   const chatId = msg.chat.id;
   try {
-    await saveUser({ chatId, alertStepEnabled: true, alertHighRateEnabled: true });
+    await saveUser({
+      chatId,
+      alertStepEnabled: true,
+      alertHighRateEnabled: true,
+    });
     telegramBot.sendMessage(chatId, '✅ Te suscribiste a las notificaciones.', {
       reply_markup: mainMenuKeyboard(true),
     });
   } catch (error: any) {
     telegramBot.sendMessage(
       chatId,
-      error.code === 11000 ? 'Ya estás suscrito.' : 'Ocurrió un error al registrarte.'
+      error.code === 11000
+        ? 'Ya estás suscrito.'
+        : 'Ocurrió un error al registrarte.'
     );
   }
 });
@@ -95,8 +121,15 @@ telegramBot.onText(/\/subscribe/, async (msg: Message) => {
 telegramBot.onText(/\/unsubscribe/, async (msg: Message) => {
   const chatId = msg.chat.id;
   try {
-    await deleteUser({ chatId, alertStepEnabled: true, alertHighRateEnabled: true });
-    telegramBot.sendMessage(chatId, 'Te dimos de baja. ¡Te echaremos de menos! 😞');
+    await deleteUser({
+      chatId,
+      alertStepEnabled: true,
+      alertHighRateEnabled: true,
+    });
+    telegramBot.sendMessage(
+      chatId,
+      'Te dimos de baja. ¡Te echaremos de menos! 😞'
+    );
   } catch {
     telegramBot.sendMessage(chatId, 'Ocurrió un error.');
   }
@@ -110,9 +143,12 @@ telegramBot.onText(/\/sell/, async (msg: Message) => {
       getLastExchangeRateHistory(),
     ]);
     const trend = lastEntry ? formatTrend(current.rate, lastEntry.rate) : '';
-    telegramBot.sendMessage(chatId, `💵 Precio venta: ${formatPrice(current.rate)} ${trend}`);
+    telegramBot.sendMessage(
+      chatId,
+      `💵 Precio venta: ${formatPrice(current.rate)} | ${trend}`
+    );
   } catch {
-    telegramBot.sendMessage(chatId, 'Ocurrió un error.');
+    telegramBot.sendMessage(chatId, 'Ocurrió un error. xd');
   }
 });
 
@@ -124,7 +160,10 @@ telegramBot.onText(/\/buy/, async (msg: Message) => {
       getLastExchangeRateHistory(),
     ]);
     const trend = lastEntry ? formatTrend(current.rate, lastEntry.rate) : '';
-    telegramBot.sendMessage(chatId, `💵 Precio compra: ${formatPrice(current.rate)} ${trend}`);
+    telegramBot.sendMessage(
+      chatId,
+      `💵 Precio compra: ${formatPrice(current.rate)} | ${trend}`
+    );
   } catch {
     telegramBot.sendMessage(chatId, 'Ocurrió un error.');
   }
@@ -139,7 +178,10 @@ telegramBot.onText(/\/target (.+)/, async (msg: Message, match) => {
   }
   try {
     await updateUser(String(chatId), { targetPrice: price });
-    telegramBot.sendMessage(chatId, `🎯 Precio objetivo: ${formatPrice(price)}`);
+    telegramBot.sendMessage(
+      chatId,
+      `🎯 Precio objetivo: ${formatPrice(price)}`
+    );
   } catch {
     telegramBot.sendMessage(chatId, 'Ocurrió un error.');
   }
@@ -163,15 +205,18 @@ telegramBot.onText(/\/stats/, async (msg: Message) => {
       getLastExchangeRateHistory(),
     ]);
     const lastAlert = getLastAlertAt();
-    telegramBot.sendMessage(msg.chat.id, [
-      `👥 Suscriptores: ${count}`,
-      lastEntry
-        ? `📈 Último precio: ${formatPrice(lastEntry.rate)} (${getLocalDate(lastEntry.timestamp)})`
-        : `📈 Sin datos`,
-      lastAlert > 0
-        ? `🔔 Última alerta: ${getLocalDate(lastAlert)}`
-        : `🔔 Sin alertas enviadas`,
-    ].join('\n'));
+    telegramBot.sendMessage(
+      msg.chat.id,
+      [
+        `👥 Suscriptores: ${count}`,
+        lastEntry
+          ? `📈 Último precio: ${formatPrice(lastEntry.rate)} (${getLocalDate(lastEntry.timestamp)})`
+          : `📈 Sin datos`,
+        lastAlert > 0
+          ? `🔔 Última alerta: ${getLocalDate(lastAlert)}`
+          : `🔔 Sin alertas enviadas`,
+      ].join('\n')
+    );
   } catch {
     telegramBot.sendMessage(msg.chat.id, 'Ocurrió un error.');
   }
@@ -205,8 +250,15 @@ telegramBot.on('callback_query', async (query) => {
 
     case 'subscribe': {
       try {
-        await saveUser({ chatId, alertStepEnabled: true, alertHighRateEnabled: true });
-        await editMenu('✅ ¡Suscrito! Recibirás alertas de precio.', mainMenuKeyboard(true));
+        await saveUser({
+          chatId,
+          alertStepEnabled: true,
+          alertHighRateEnabled: true,
+        });
+        await editMenu(
+          '✅ ¡Suscrito! Recibirás alertas de precio.',
+          mainMenuKeyboard(true)
+        );
       } catch (error: any) {
         await telegramBot.sendMessage(
           chatId,
@@ -218,8 +270,15 @@ telegramBot.on('callback_query', async (query) => {
 
     case 'unsubscribe': {
       try {
-        await deleteUser({ chatId, alertStepEnabled: true, alertHighRateEnabled: true });
-        await editMenu('Te dimos de baja. ¡Te echaremos de menos! 😞', mainMenuKeyboard(false));
+        await deleteUser({
+          chatId,
+          alertStepEnabled: true,
+          alertHighRateEnabled: true,
+        });
+        await editMenu(
+          'Te dimos de baja. ¡Te echaremos de menos! 😞',
+          mainMenuKeyboard(false)
+        );
       } catch {
         await telegramBot.sendMessage(chatId, 'Ocurrió un error.');
       }
@@ -232,8 +291,13 @@ telegramBot.on('callback_query', async (query) => {
           generateExchangeRateHistoryEntry('SELL'),
           getLastExchangeRateHistory(),
         ]);
-        const trend = lastEntry ? formatTrend(current.rate, lastEntry.rate) : '';
-        await telegramBot.sendMessage(chatId, `💵 Precio venta: ${formatPrice(current.rate)} ${trend}`);
+        const trend = lastEntry
+          ? formatTrend(current.rate, lastEntry.rate)
+          : '';
+        await telegramBot.sendMessage(
+          chatId,
+          `💵 Precio venta: ${formatPrice(current.rate)} ${trend}`
+        );
       } catch {
         await telegramBot.sendMessage(chatId, 'Ocurrió un error.');
       }
@@ -246,8 +310,13 @@ telegramBot.on('callback_query', async (query) => {
           generateExchangeRateHistoryEntry('BUY'),
           getLastExchangeRateHistory(),
         ]);
-        const trend = lastEntry ? formatTrend(current.rate, lastEntry.rate) : '';
-        await telegramBot.sendMessage(chatId, `💵 Precio compra: ${formatPrice(current.rate)} ${trend}`);
+        const trend = lastEntry
+          ? formatTrend(current.rate, lastEntry.rate)
+          : '';
+        await telegramBot.sendMessage(
+          chatId,
+          `💵 Precio compra: ${formatPrice(current.rate)} ${trend}`
+        );
       } catch {
         await telegramBot.sendMessage(chatId, 'Ocurrió un error.');
       }
@@ -260,7 +329,10 @@ telegramBot.on('callback_query', async (query) => {
         await telegramBot.sendMessage(chatId, 'Primero debes suscribirte.');
         break;
       }
-      await editMenu('⚙️ Configuración', settingsMenuKeyboard(doc.toObject() as TelegramUser));
+      await editMenu(
+        '⚙️ Configuración',
+        settingsMenuKeyboard(doc.toObject() as TelegramUser)
+      );
       break;
     }
 
@@ -272,7 +344,10 @@ telegramBot.on('callback_query', async (query) => {
         alertStepEnabled: !(current.alertStepEnabled !== false),
       });
       if (updated) {
-        await editMenu('⚙️ Configuración', settingsMenuKeyboard(updated.toObject() as TelegramUser));
+        await editMenu(
+          '⚙️ Configuración',
+          settingsMenuKeyboard(updated.toObject() as TelegramUser)
+        );
       }
       break;
     }
@@ -285,14 +360,20 @@ telegramBot.on('callback_query', async (query) => {
         alertHighRateEnabled: !(current.alertHighRateEnabled !== false),
       });
       if (updated) {
-        await editMenu('⚙️ Configuración', settingsMenuKeyboard(updated.toObject() as TelegramUser));
+        await editMenu(
+          '⚙️ Configuración',
+          settingsMenuKeyboard(updated.toObject() as TelegramUser)
+        );
       }
       break;
     }
 
     case 'set_target': {
       setState(chatId, 'AWAITING_TARGET_PRICE');
-      await telegramBot.sendMessage(chatId, '🎯 Ingresa tu precio objetivo (ej: 7.20):');
+      await telegramBot.sendMessage(
+        chatId,
+        '🎯 Ingresa tu precio objetivo (ej: 7.20):'
+      );
       break;
     }
 
@@ -300,7 +381,10 @@ telegramBot.on('callback_query', async (query) => {
       await clearTargetPrice(String(chatId));
       const updatedDoc = await getUserByChatId(String(chatId));
       if (updatedDoc) {
-        await editMenu('⚙️ Configuración', settingsMenuKeyboard(updatedDoc.toObject() as TelegramUser));
+        await editMenu(
+          '⚙️ Configuración',
+          settingsMenuKeyboard(updatedDoc.toObject() as TelegramUser)
+        );
       }
       break;
     }
@@ -318,12 +402,18 @@ telegramBot.on('message', async (msg) => {
     setState(chatId, 'IDLE');
 
     if (isNaN(price) || price <= 0) {
-      telegramBot.sendMessage(chatId, '❌ Precio inválido. Ingresa un número como 7.20');
+      telegramBot.sendMessage(
+        chatId,
+        '❌ Precio inválido. Ingresa un número como 7.20'
+      );
       return;
     }
     try {
       await updateUser(String(chatId), { targetPrice: price });
-      telegramBot.sendMessage(chatId, `✅ Precio objetivo establecido: ${formatPrice(price)}`);
+      telegramBot.sendMessage(
+        chatId,
+        `✅ Precio objetivo establecido: ${formatPrice(price)}`
+      );
     } catch {
       telegramBot.sendMessage(chatId, 'Ocurrió un error al guardar el precio.');
     }

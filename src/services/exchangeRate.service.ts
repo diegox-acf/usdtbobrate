@@ -12,12 +12,13 @@ import {
 } from '@utils/index';
 import logger from '@utils/logger';
 
-export const getLastExchangeRateHistory = async (): Promise<ExchangeRate | null> => {
-  const doc = await ExchangeRateModel.findOne({ tradeType: 'SELL' })
-    .sort({ timestamp: -1 })
-    .exec();
-  return doc ?? null;
-};
+export const getLastExchangeRateHistory =
+  async (): Promise<ExchangeRate | null> => {
+    const doc = await ExchangeRateModel.findOne({ tradeType: 'SELL' })
+      .sort({ timestamp: -1 })
+      .exec();
+    return doc ?? null;
+  };
 
 export const getExchangeRateHistory = async (): Promise<ExchangeRate[]> => {
   return await ExchangeRateModel.find().exec();
@@ -38,7 +39,10 @@ export const generateExchangeRateHistoryEntry = async (
   const response = await client.post('/', getExchangeRateQueryData(tradeType));
 
   const prices = response.data.data
-    .filter((item: any) => item.advertiser.monthOrderCount > 0)
+    .filter(
+      (item: any) =>
+        item.advertiser.monthOrderCount > 0 && item.privilegeDesc === null
+    )
     .map((item: any) => +item.adv.price) as number[];
   logger.debug(`List of prices on ${new Date().toISOString()}: ${prices}`);
 
@@ -87,7 +91,10 @@ export const computeMaxIncrease = (rates: number[]): number => {
 };
 
 // Exported for unit testing — Z-score of current rate against historical window
-export const computeZScore = (current: number, historical: number[]): number => {
+export const computeZScore = (
+  current: number,
+  historical: number[]
+): number => {
   if (historical.length < 2) return 0;
   const mean = getMean(historical);
   const stddev = getStandardDeviation(historical);
@@ -113,7 +120,9 @@ export const checkHighExchangeRateZScore = async (): Promise<number | null> => {
   const historical = rates.slice(1); // exclude current from the baseline
 
   const zScore = computeZScore(current, historical);
-  logger.debug(`zScore: ${zScore.toFixed(3)}, mean: ${getMean(historical).toFixed(3)}, stddev: ${getStandardDeviation(historical).toFixed(3)}`);
+  logger.debug(
+    `zScore: ${zScore.toFixed(3)}, mean: ${getMean(historical).toFixed(3)}, stddev: ${getStandardDeviation(historical).toFixed(3)}`
+  );
 
   return zScore >= threshold ? current : null;
 };
