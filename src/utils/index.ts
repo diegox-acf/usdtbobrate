@@ -4,7 +4,7 @@ export const getExchangeRateQueryData = (tradeType: TradeType) => {
   return {
     fiat: 'BOB',
     page: 1,
-    rows: 10,
+    rows: 5,
     tradeType: tradeType,
     asset: 'USDT',
     countries: [],
