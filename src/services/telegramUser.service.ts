@@ -66,9 +66,18 @@ export const sendMessageToUser = async (
   await telegramBot.sendMessage(chatId, message);
 };
 
-export const sendAlerts = async (message: string): Promise<void> => {
-  logger.info(`Sending alerts to subscribed users: ${message}`);
-  const docs = await getAllUsers();
+export type AlertType = 'highRate' | 'step';
+
+export const sendAlerts = async (message: string, type?: AlertType): Promise<void> => {
+  logger.info(`Sending ${type ?? 'broadcast'} alert: ${message}`);
+  let docs;
+  if (type === 'step') {
+    docs = await TelegramUserModel.find({ alertStepEnabled: { $ne: false } }).exec();
+  } else if (type === 'highRate') {
+    docs = await TelegramUserModel.find({ alertHighRateEnabled: { $ne: false } }).exec();
+  } else {
+    docs = await getAllUsers();
+  }
   const users = docs.map((doc) => doc.toObject());
   await Promise.all(users.map((user) => telegramBot.sendMessage(user.chatId, message)));
 };

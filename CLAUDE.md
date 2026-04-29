@@ -8,13 +8,14 @@ USDT/BOB Rate Tracker — a Node.js/TypeScript app that monitors the USDT → BO
 
 ```
 src/
-├── config/         # Env validation (Zod), DB, Axios client, Telegram bot, alert cooldown state
+├── config/         # Env validation (Zod), DB, Axios client, Telegram bot,
+│                   # alert cooldown state, conversation state
 ├── models/         # Mongoose schemas: ExchangeRate, TelegramUser
 ├── services/       # Business logic: rate fetching, alert algorithms, user CRUD, messaging
 ├── jobs/           # node-cron schedulers (rate polling, daily summary)
 ├── controllers/    # Express route handlers
 ├── routes/         # Express route definitions
-├── events/         # Telegram bot command handlers
+├── events/         # Telegram bot command + callback query handlers
 ├── utils/          # Pure helpers: math, formatting, query builders, logger
 └── __tests__/      # Vitest unit tests
 ```
@@ -24,13 +25,14 @@ src/
 | File | Purpose |
 |---|---|
 | `src/server.ts` | Entry point — connects DB, starts HTTP server, starts cron jobs |
-| `src/jobs/exchangeRate.job.ts` | Main cron tick: fetch rates, save, run alert algorithms, send alerts |
-| `src/jobs/dailySummary.job.ts` | Daily summary cron: queries last 24h rates, broadcasts max/min/avg |
+| `src/jobs/exchangeRate.job.ts` | Main cron tick: fetch rates, save, run alert algorithms, check targets |
+| `src/jobs/dailySummary.job.ts` | Daily cron: queries last 24h SELL rates, broadcasts max/min/avg |
 | `src/services/exchangeRate.service.ts` | Rate logic: fetch, save, step check, Kadane, Z-score, daily query |
-| `src/services/telegramUser.service.ts` | User CRUD, `sendAlerts(message)`, `sendMessageToUser`, target price helpers |
+| `src/services/telegramUser.service.ts` | User CRUD, `sendAlerts(message, type?)`, `sendMessageToUser`, target/preference helpers |
 | `src/config/alertCooldown.ts` | In-memory cooldown state (`isOnCooldown`, `markAlertSent`, `getLastAlertAt`) |
+| `src/config/conversationState.ts` | In-memory per-user conversation state machine (`IDLE`, `AWAITING_TARGET_PRICE`) |
 | `src/config/env.ts` | Zod schema for all env vars — calls `process.exit(1)` on missing required vars |
-| `src/events/telegramBot.events.ts` | Telegram command handlers (/start, /subscribe, /sell, /buy, /target, /stats, etc.) |
+| `src/events/telegramBot.events.ts` | All Telegram handlers: text commands, inline keyboard callbacks, conversation messages |
 
 ## Alert Algorithms
 
@@ -65,10 +67,26 @@ Two algorithms live in `exchangeRate.service.ts`, selected via `ALERT_ALGORITHM`
 
 ```ts
 ExchangeRate { rate: number, timestamp: number, tradeType: 'SELL' | 'BUY' }
-TelegramUser { chatId: number, targetPrice?: number }  // chatId has unique index
+TelegramUser {
+  chatId: number,            // unique index
+  targetPrice?: number,
+  alertStepEnabled: boolean, // default true
+  alertHighRateEnabled: boolean, // default true
+}
 ```
 
 Both SELL and BUY rates are fetched and saved each cron tick. Alert algorithms, step check, and daily summary all query `{ tradeType: 'SELL' }` only.
+
+Existing users without `alertStepEnabled`/`alertHighRateEnabled` are treated as `true` everywhere via `!== false` checks (no migration needed).
+
+## Alert Broadcasting
+
+`sendAlerts(message, type?)` in `telegramUser.service.ts`:
+- `type = 'step'` → only users with `alertStepEnabled !== false`
+- `type = 'highRate'` → only users with `alertHighRateEnabled !== false`
+- no type → all subscribers (used by daily summary)
+
+`sendMessageToUser(chatId, message)` — sends to a single user (used for target price hits).
 
 ## Cron Jobs
 
@@ -77,20 +95,27 @@ Both SELL and BUY rates are fetched and saved each cron tick. Alert algorithms, 
 | `startJobScheduler` | `*/30 * * * *` | Fetch rates, run alert algorithms, check targets |
 | `startDailySummaryJob` | `0 12 * * *` | Broadcast daily max/min/avg to all subscribers |
 
-## Telegram Commands
+## Telegram Bot
 
-| Command | Who | Description |
-|---|---|---|
-| `/start` | All | Show menu |
-| `/subscribe` | All | Register for alerts |
-| `/unsubscribe` | All | Deregister |
-| `/sell` | All | Current sell rate + trend |
-| `/buy` | All | Current buy rate + trend |
-| `/target <price>` | All | Set personal target price alert |
-| `/cleartarget` | All | Remove personal target |
-| `/stats` | Admin only | Subscriber count, last rate, last alert time |
+Full menu-driven UI via inline keyboards. Text commands also work for backward compatibility.
 
-Admin is identified by `TELEGRAM_ADMIN_CHAT_ID`. Non-admin `/stats` calls are silently ignored.
+### Conversation state (`src/config/conversationState.ts`)
+- `IDLE` (default) — normal command handling
+- `AWAITING_TARGET_PRICE` — set when user taps "Set target"; next non-command message is captured as the price
+
+### Callback data values
+| Value | Action |
+|---|---|
+| `main_menu` | Show/refresh main menu |
+| `subscribe` / `unsubscribe` | Toggle subscription, update menu in-place |
+| `check_sell` / `check_buy` | Fetch and send current rate |
+| `settings` | Show settings menu |
+| `toggle_step` / `toggle_high_rate` | Flip preference, refresh settings keyboard in-place |
+| `set_target` | Enter `AWAITING_TARGET_PRICE` state |
+| `clear_target` | `$unset` targetPrice, refresh settings keyboard |
+
+### Admin
+`/stats` is silently ignored for non-admin callers. Admin is identified by `TELEGRAM_ADMIN_CHAT_ID` env var.
 
 ## Testing
 
@@ -105,16 +130,14 @@ Run: `pnpm test:run`
 ## Development Notes
 
 - pnpm is the package manager — do not use npm or yarn
-- TypeScript path aliases are configured in `tsconfig.json` (`@config/*`, `@services/*`, etc.)
+- TypeScript path aliases configured in `tsconfig.json` (`@config/*`, `@services/*`, etc.)
 - `src/config/env.ts` runs Zod validation at import time — mock `@config/properties` in tests, not `@config/env`
-- `tradeType` is required on `ExchangeRate`; existing DB documents without it will cause `getLastExchangeRateHistory` to return null on startup — clear the collection or run a migration if needed
+- `tradeType` is required on `ExchangeRate`; existing DB documents without it will be missed by queries filtering on `tradeType: 'SELL'` — clear the collection or run a migration if needed
 - Bolivia timezone is GMT-4; handled manually in `getLocalDate()` in `src/utils/index.ts`
-- `sendAlerts(message: string)` broadcasts to all subscribers; the caller is responsible for constructing the message string
-- `sendMessageToUser(chatId, message)` sends to a single user — used for target price notifications
 
 ## Active Work (Ongoing Tasks)
 
-1. **Bugs** ✅ — all fixed
+1. **Bugs** ✅
 2. **Algorithm** ✅ — Z-score + Kadane, selectable via `ALERT_ALGORITHM`
 3. **New features** ✅ — trend indicator, cooldown, daily summary, target price alerts, admin `/stats`
-4. **Telegram navigation** — pending (inline keyboard buttons, user preferences/settings flow, conversation state)
+4. **Telegram navigation** ✅ — inline keyboards, settings menu, per-user alert preferences, conversation state for target price

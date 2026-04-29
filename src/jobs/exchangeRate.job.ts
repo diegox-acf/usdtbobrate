@@ -51,10 +51,10 @@ export const startJobScheduler = () => {
       if (!isOnCooldown(cooldownMs)) {
         const highRate = await detectHighRate();
         if (highRate) {
-          await sendAlerts(`Alerta de precio alto: ${formatPrice(highRate)} ${trend}`);
+          await sendAlerts(`Alerta de precio alto: ${formatPrice(highRate)} ${trend}`, 'highRate');
           markAlertSent();
         } else if (lastEntry !== null && stepCrossed(sellEntry.rate, lastEntry.rate)) {
-          await sendAlerts(`El precio llego a ${formatPrice(sellEntry.rate)} ${trend}`);
+          await sendAlerts(`El precio llego a ${formatPrice(sellEntry.rate)} ${trend}`, 'step');
           markAlertSent();
         }
       } else {

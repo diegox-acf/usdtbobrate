@@ -15,8 +15,9 @@ Monitors the USDT → Bolivian Boliviano (BOB) exchange rate on Binance P2P and 
 - **Trend indicator** — every alert and on-demand rate includes a direction indicator (e.g. `↑ +0.15`, `↓ -0.05`)
 - **Daily summary** — scheduled Telegram broadcast with the day's max, min, and average SELL rate
 - **Target price alert** — users set a personal target price; get a one-time notification when it is reached
-- **Telegram bot** — subscribe/unsubscribe, query rates on demand, manage personal settings
-- **Admin commands** — operator-only `/stats` command showing subscriber count, last rate, and last alert time
+- **Per-user alert preferences** — each subscriber can independently toggle step alerts and high-rate alerts on/off
+- **Inline keyboard navigation** — full menu-driven bot UI; no need to remember commands
+- **Admin commands** — operator-only `/stats` showing subscriber count, last rate, and last alert time
 - **REST API** — endpoint to retrieve full rate history (debug)
 
 ## Tech Stack
@@ -94,18 +95,43 @@ docker build -t usdtbobrate .
 docker run -p 3001:3001 --env-file .env usdtbobrate
 ```
 
-## Telegram Bot Commands
+## Telegram Bot
+
+The bot is fully menu-driven. Send `/start` to open the main menu — all features are accessible via inline buttons without memorising any commands.
+
+### Main menu
+
+```
+[ 🔔 Suscribirse ]          (or 🔕 Cancelar suscripción if already subscribed)
+[ 💵 Precio venta ] [ 💵 Precio compra ]
+[ ⚙️ Configuración ]
+```
+
+### Settings menu (`⚙️ Configuración`)
+
+```
+[ ✅ Alertas de paso ]
+[ ✅ Alertas de precio alto ]
+[ 🎯 Establecer precio objetivo ]
+[ 🗑️ Quitar objetivo (7.20) ]   ← only shown when a target is active
+[ 🔙 Volver ]
+```
+
+Tapping a toggle updates it in-place. Tapping **Establecer precio objetivo** starts a conversation: the bot asks for a price and the next message you send becomes the target.
+
+### Commands (also available as text)
 
 | Command | Description |
 |---|---|
-| `/start` | Show the main menu |
-| `/subscribe` | Register to receive price alerts |
-| `/unsubscribe` | Stop receiving alerts |
-| `/sell` | Get the current USDT→BOB sell rate with trend indicator |
-| `/buy` | Get the current USDT→BOB buy rate with trend indicator |
-| `/target <price>` | Set a personal target price alert (e.g. `/target 7.20`) |
-| `/cleartarget` | Remove your current target price |
-| `/stats` | *(Admin only)* Show subscriber count, last rate, and last alert time |
+| `/start` | Open the main menu |
+| `/subscribe` | Subscribe to alerts |
+| `/unsubscribe` | Unsubscribe |
+| `/sell` | Current USDT→BOB sell rate + trend |
+| `/buy` | Current USDT→BOB buy rate + trend |
+| `/settings` | Open the settings menu |
+| `/target <price>` | Set a personal target price (e.g. `/target 7.20`) |
+| `/cleartarget` | Remove your target price |
+| `/stats` | *(Admin only)* Subscriber count, last rate, last alert time |
 
 ## REST API
 

@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface TelegramUser {
   chatId: number;
   targetPrice?: number;
+  alertStepEnabled: boolean;
+  alertHighRateEnabled: boolean;
 }
 
 const telegramUserSchema = new Schema<TelegramUser>({
@@ -14,6 +16,14 @@ const telegramUserSchema = new Schema<TelegramUser>({
   targetPrice: {
     type: Number,
     required: false,
+  },
+  alertStepEnabled: {
+    type: Boolean,
+    default: true,
+  },
+  alertHighRateEnabled: {
+    type: Boolean,
+    default: true,
   },
 });
 
