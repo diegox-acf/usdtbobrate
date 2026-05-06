@@ -1,5 +1,5 @@
 import telegramBot from '@config/telegramBot';
-import TelegramUserModel, { TelegramUser } from '@models/telegramUser.model';
+import TelegramUserModel, { SENSITIVITY_THRESHOLDS, TelegramUser } from '@models/telegramUser.model';
 import logger from '@utils/logger';
 import { Document } from 'mongoose';
 
@@ -64,6 +64,23 @@ export const sendMessageToUser = async (
   message: string
 ): Promise<void> => {
   await telegramBot.sendMessage(chatId, message);
+};
+
+export const sendHighRateAlertsPerUser = async (
+  message: string,
+  rawZScore: number | null,
+  kadaneTriggered: boolean,
+): Promise<void> => {
+  logger.info(`Sending per-user high-rate alert: ${message}`);
+  const docs = await TelegramUserModel.find({ alertHighRateEnabled: { $ne: false } }).exec();
+  await Promise.all(
+    docs.map((doc) => {
+      const user = doc.toObject() as TelegramUser;
+      const threshold = SENSITIVITY_THRESHOLDS[user.alertSensitivity ?? 'media'];
+      const fires = kadaneTriggered || (rawZScore !== null && rawZScore >= threshold);
+      return fires ? telegramBot.sendMessage(user.chatId, message) : Promise.resolve();
+    })
+  );
 };
 
 export type AlertType = 'highRate' | 'step';

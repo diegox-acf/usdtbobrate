@@ -24,6 +24,18 @@ export const getExchangeRateHistory = async (): Promise<ExchangeRate[]> => {
   return await ExchangeRateModel.find().exec();
 };
 
+export const getExchangeRateHistoryFiltered = async (
+  limit: number,
+  tradeType?: TradeType,
+): Promise<ExchangeRate[]> => {
+  const query = tradeType ? { tradeType } : {};
+  const docs = await ExchangeRateModel.find(query)
+    .sort({ timestamp: -1 })
+    .limit(limit)
+    .exec();
+  return docs.reverse().map((d) => d.toObject() as ExchangeRate);
+};
+
 export const getDailySellRates = async (): Promise<number[]> => {
   const since = Date.now() - 24 * 60 * 60 * 1000;
   const docs = await ExchangeRateModel.find({
@@ -100,6 +112,19 @@ export const computeZScore = (
   const stddev = getStandardDeviation(historical);
   if (stddev === 0) return 0;
   return (current - mean) / stddev;
+};
+
+export const computeCurrentZScore = async (): Promise<number | null> => {
+  const windowSize = properties.exchangeRate.zscoreWindowSize;
+  const docs = await ExchangeRateModel.find({ tradeType: 'SELL' })
+    .sort({ timestamp: -1 })
+    .limit(windowSize + 1)
+    .exec();
+  if (docs.length < 3) return null;
+  const rates = docs.map((doc) => doc.rate);
+  const zScore = computeZScore(rates[0], rates.slice(1));
+  logger.debug(`raw zScore: ${zScore.toFixed(3)}`);
+  return zScore;
 };
 
 export const checkHighExchangeRateZScore = async (): Promise<number | null> => {

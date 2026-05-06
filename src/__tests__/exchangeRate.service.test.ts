@@ -29,6 +29,7 @@ vi.mock('@models/exchangeRate.model', () => ({
 import {
   checkHighExchangeRateIncrease,
   checkHighExchangeRateZScore,
+  computeCurrentZScore,
   computeMaxIncrease,
   computeZScore,
   stepCrossed,
@@ -188,6 +189,45 @@ describe('computeZScore', () => {
     const historical = [6.98, 7.0, 7.02, 6.99, 7.01, 7.0, 6.98, 7.02];
     const zScore = computeZScore(7.1, historical);
     expect(zScore).toBeGreaterThanOrEqual(2.0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('computeCurrentZScore', () => {
+  beforeEach(() => {
+    mockFind.mockReset();
+  });
+
+  it('returns null when there are fewer than 3 data points', async () => {
+    mockFind.mockReturnValue(makeQueryChain(toDocs([7.1, 7.0])));
+    expect(await computeCurrentZScore()).toBeNull();
+  });
+
+  it('returns the raw z-score even when below 2.0 (unlike checkHighExchangeRateZScore)', async () => {
+    // Volatile history — a modest current rate produces z-score < 2.0
+    const rates = [7.05, 6.8, 7.2, 6.9, 7.1, 6.85, 7.0, 6.95, 7.15, 6.8];
+    mockFind.mockReturnValue(makeQueryChain(toDocs(rates)));
+    const result = await computeCurrentZScore();
+    expect(result).not.toBeNull();
+    expect(result).toBeLessThan(2.0);
+  });
+
+  it('returns a high z-score for a clear outlier', async () => {
+    const historical = [
+      6.99, 7.01, 7.00, 6.98, 7.02, 7.00, 6.99, 7.01,
+      7.00, 7.01, 6.99, 7.00, 7.01, 6.98, 7.02, 7.00,
+      6.99, 7.01, 7.00,
+    ];
+    mockFind.mockReturnValue(makeQueryChain(toDocs([7.1, ...historical])));
+    const result = await computeCurrentZScore();
+    expect(result).not.toBeNull();
+    expect(result!).toBeGreaterThanOrEqual(2.0);
+  });
+
+  it('returns 0 (not null) when stddev is zero', async () => {
+    mockFind.mockReturnValue(makeQueryChain(toDocs(Array(10).fill(7.0))));
+    expect(await computeCurrentZScore()).toBe(0);
   });
 });
 

@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node -r ts-node/register/transpile-only -r tsconfig-paths/register dist/server.js",
-    "build": "tsc",
+    "build:webapp": "cd webapp && pnpm install --frozen-lockfile && pnpm build",
+    "build": "pnpm build:webapp && tsc",
     "dev": "ts-node-dev --respawn --transpile-only --require tsconfig-paths/register src/server.ts",
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{ts,tsx,js,jsx}\"",

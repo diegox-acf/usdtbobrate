@@ -16,6 +16,7 @@ const envSchema = z.object({
   RATE_CRONJOB_EXPRESSION: z.string().default('*/30 * * * *'),
   DAILY_SUMMARY_CRON: z.string().default('0 12 * * *'),
   TELEGRAM_ADMIN_CHAT_ID: z.string().optional(),
+  WEBAPP_URL: z.string().url().optional(),
 });
 
 const { success, error, data } = envSchema.safeParse(process.env);
@@ -41,4 +42,5 @@ export const {
   ALERT_COOLDOWN_MINUTES,
   DAILY_SUMMARY_CRON,
   TELEGRAM_ADMIN_CHAT_ID,
+  WEBAPP_URL,
 } = data;

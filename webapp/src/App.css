@@ -1,0 +1,213 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  overscroll-behavior: none;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 14px 12px 20px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* ── Full-screen states ──────────────────────── */
+
+.center-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 10px;
+  font-size: 15px;
+  opacity: 0.6;
+}
+
+.center-state .spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: rgba(255,255,255,0.7);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+.error-text { color: #ff5555; opacity: 1; }
+
+/* ── Header ──────────────────────────────────── */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.header-left .label {
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin-bottom: 2px;
+}
+
+.header-left .price {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+
+.header-left .change {
+  font-size: 13px;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.change.up   { color: #2ed573; }
+.change.down { color: #ff5555; }
+.change.flat { opacity: 0.5; }
+
+.refresh-btn {
+  background: rgba(255,255,255,0.07);
+  border: none;
+  border-radius: 50%;
+  color: inherit;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, opacity 0.15s;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.refresh-btn:active  { background: rgba(255,255,255,0.14); }
+.refresh-btn:disabled { opacity: 0.3; cursor: default; }
+.refresh-btn.spinning { animation: spin 0.75s linear infinite; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Stats row ───────────────────────────────── */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 10px 6px;
+  margin-bottom: 12px;
+  gap: 4px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  opacity: 0.45;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value.sell { color: #2ed573; }
+.stat-value.buy  { color: #54a0ff; }
+
+/* ── Controls (range + legend) ───────────────── */
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.range-btns {
+  display: flex;
+  gap: 3px;
+}
+
+.range-btn {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 9px;
+  opacity: 0.4;
+  transition: background 0.12s, opacity 0.12s;
+}
+
+.range-btn:active { background: rgba(255,255,255,0.08); }
+.range-btn.active { background: rgba(255,255,255,0.12); opacity: 1; }
+
+.legend {
+  display: flex;
+  gap: 5px;
+}
+
+.legend-btn {
+  background: transparent;
+  border: 1.5px solid;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  transition: opacity 0.12s;
+  white-space: nowrap;
+}
+
+.legend-btn.sell-btn  { color: #2ed573; border-color: #2ed573; opacity: 1; }
+.legend-btn.buy-btn   { color: #54a0ff; border-color: #54a0ff; }
+.legend-btn.buy-btn.off { opacity: 0.3; }
+
+/* ── Chart ───────────────────────────────────── */
+
+.chart-wrap {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.no-data {
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  opacity: 0.4;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+}
+
+/* ── Footer ──────────────────────────────────── */
+
+.footer {
+  margin-top: 8px;
+  font-size: 11px;
+  opacity: 0.3;
+  text-align: right;
+}

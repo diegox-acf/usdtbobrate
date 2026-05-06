@@ -2,7 +2,7 @@ import { getLastAlertAt } from '@config/alertCooldown';
 import { getState, setState } from '@config/conversationState';
 import { properties } from '@config/properties';
 import telegramBot from '@config/telegramBot';
-import { TelegramUser } from '@models/telegramUser.model';
+import { AlertSensitivity, TelegramUser } from '@models/telegramUser.model';
 import {
   generateExchangeRateHistoryEntry,
   getLastExchangeRateHistory,
@@ -16,12 +16,12 @@ import {
   updateUser,
 } from '@services/telegramUser.service';
 import { formatPrice, formatTrend, getLocalDate } from '@utils/index';
-import { Message } from 'node-telegram-bot-api';
+import { InlineKeyboardButton, Message } from 'node-telegram-bot-api';
 
 // ─── Keyboard builders ────────────────────────────────────────────────────────
 
-const mainMenuKeyboard = (isSubscribed: boolean) => ({
-  inline_keyboard: [
+const mainMenuKeyboard = (isSubscribed: boolean) => {
+  const rows: InlineKeyboardButton[][] = [
     [
       isSubscribed
         ? { text: '🔕 Cancelar suscripción', callback_data: 'unsubscribe' }
@@ -32,12 +32,32 @@ const mainMenuKeyboard = (isSubscribed: boolean) => ({
       { text: '💵 Precio compra', callback_data: 'check_buy' },
     ],
     [{ text: '⚙️ Configuración', callback_data: 'settings' }],
+  ];
+  if (properties.telegram.webAppUrl) {
+    rows.splice(2, 0, [{ text: '📈 Ver historial', web_app: { url: properties.telegram.webAppUrl } } as any]);
+  }
+  return { inline_keyboard: rows };
+};
+
+const sensitivityLabel: Record<AlertSensitivity, string> = {
+  alta: 'Alta',
+  media: 'Media',
+  baja: 'Baja',
+};
+
+const sensitivityMenuKeyboard = (current: AlertSensitivity) => ({
+  inline_keyboard: [
+    [{ text: `${current === 'alta' ? '✅' : '  '} Alta — alertas frecuentes`, callback_data: 'set_sensitivity_alta' }],
+    [{ text: `${current === 'media' ? '✅' : '  '} Media — por defecto`, callback_data: 'set_sensitivity_media' }],
+    [{ text: `${current === 'baja' ? '✅' : '  '} Baja — solo grandes subidas`, callback_data: 'set_sensitivity_baja' }],
+    [{ text: '🔙 Configuración', callback_data: 'settings' }],
   ],
 });
 
 const settingsMenuKeyboard = (user: TelegramUser) => {
   const stepEnabled = user.alertStepEnabled !== false;
   const highRateEnabled = user.alertHighRateEnabled !== false;
+  const sensitivity = user.alertSensitivity ?? 'media';
   return {
     inline_keyboard: [
       [
@@ -50,6 +70,12 @@ const settingsMenuKeyboard = (user: TelegramUser) => {
         {
           text: `${highRateEnabled ? '✅' : '❌'} Alertas de precio alto`,
           callback_data: 'toggle_high_rate',
+        },
+      ],
+      [
+        {
+          text: `📊 Sensibilidad: ${sensitivityLabel[sensitivity]}`,
+          callback_data: 'sensitivity_menu',
         },
       ],
       [{ text: '🎯 Establecer precio objetivo', callback_data: 'set_target' }],
@@ -365,6 +391,34 @@ telegramBot.on('callback_query', async (query) => {
           settingsMenuKeyboard(updated.toObject() as TelegramUser)
         );
       }
+      break;
+    }
+
+    case 'sensitivity_menu': {
+      const doc = await getUserByChatId(String(chatId));
+      if (!doc) break;
+      const user = doc.toObject() as TelegramUser;
+      await editMenu(
+        '📊 Sensibilidad de alertas de precio alto\n\nElige qué tan sensible deben ser las alertas Z-score:',
+        sensitivityMenuKeyboard(user.alertSensitivity ?? 'media')
+      );
+      break;
+    }
+
+    case 'set_sensitivity_alta':
+    case 'set_sensitivity_media':
+    case 'set_sensitivity_baja': {
+      const levelMap: Record<string, AlertSensitivity> = {
+        set_sensitivity_alta: 'alta',
+        set_sensitivity_media: 'media',
+        set_sensitivity_baja: 'baja',
+      };
+      const newLevel = levelMap[query.data!];
+      await updateUser(String(chatId), { alertSensitivity: newLevel });
+      await editMenu(
+        '📊 Sensibilidad de alertas de precio alto\n\nElige qué tan sensible deben ser las alertas Z-score:',
+        sensitivityMenuKeyboard(newLevel)
+      );
       break;
     }
 

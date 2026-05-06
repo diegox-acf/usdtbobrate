@@ -2,7 +2,7 @@ import { isOnCooldown, markAlertSent } from '@config/alertCooldown';
 import { properties } from '@config/properties';
 import {
   checkHighExchangeRateIncrease,
-  checkHighExchangeRateZScore,
+  computeCurrentZScore,
   generateExchangeRateHistoryEntry,
   getLastExchangeRateHistory,
   saveExchangeRateEntry,
@@ -12,22 +12,12 @@ import {
   clearTargetPrice,
   getUsersWithTargetPrice,
   sendAlerts,
+  sendHighRateAlertsPerUser,
   sendMessageToUser,
 } from '@services/telegramUser.service';
 import { formatPrice, formatTrend, getLocalDate } from '@utils/index';
 import logger from '@utils/logger';
 import cron from 'node-cron';
-
-const detectHighRate = async (): Promise<number | null> => {
-  const algorithm = properties.exchangeRate.alertAlgorithm;
-  if (algorithm === 'kadane') return checkHighExchangeRateIncrease();
-  if (algorithm === 'zscore') return checkHighExchangeRateZScore();
-  const [kadane, zscore] = await Promise.all([
-    checkHighExchangeRateIncrease(),
-    checkHighExchangeRateZScore(),
-  ]);
-  return kadane ?? zscore;
-};
 
 export const startJobScheduler = () => {
   cron.schedule(properties.job.cronExpression, async () => {
@@ -47,14 +37,28 @@ export const startJobScheduler = () => {
 
       const trend = lastEntry ? formatTrend(sellEntry.rate, lastEntry.rate) : '';
       const cooldownMs = properties.job.alertCooldownMs;
+      const algorithm = properties.exchangeRate.alertAlgorithm;
 
       if (!isOnCooldown(cooldownMs)) {
-        const highRate = await detectHighRate();
-        if (highRate) {
-          await sendAlerts(`Alerta de precio alto: ${formatPrice(highRate)} ${trend}`, 'highRate');
+        const [kadaneRate, rawZScore] = await Promise.all([
+          algorithm !== 'zscore' ? checkHighExchangeRateIncrease() : Promise.resolve(null),
+          algorithm !== 'kadane' ? computeCurrentZScore() : Promise.resolve(null),
+        ]);
+        const kadaneTriggered = kadaneRate !== null;
+        const anyTriggered = kadaneTriggered || rawZScore !== null;
+
+        if (anyTriggered) {
+          await sendHighRateAlertsPerUser(
+            `Alerta de precio alto: ${formatPrice(sellEntry.rate)} ${trend}`,
+            rawZScore,
+            kadaneTriggered,
+          );
           markAlertSent();
         } else if (lastEntry !== null && stepCrossed(sellEntry.rate, lastEntry.rate)) {
-          await sendAlerts(`El precio llego a ${formatPrice(sellEntry.rate)} ${trend}`, 'step');
+          await sendAlerts(
+            `El precio llego a ${formatPrice(sellEntry.rate)} ${trend}`,
+            'step'
+          );
           markAlertSent();
         }
       } else {
@@ -66,7 +70,11 @@ export const startJobScheduler = () => {
       await Promise.all(
         targetUsers
           .map((doc) => doc.toObject())
-          .filter((user) => user.targetPrice !== undefined && sellEntry.rate >= user.targetPrice)
+          .filter(
+            (user) =>
+              user.targetPrice !== undefined &&
+              sellEntry.rate >= user.targetPrice
+          )
           .map(async (user) => {
             await sendMessageToUser(
               user.chatId,

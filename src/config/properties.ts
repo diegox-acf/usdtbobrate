@@ -13,6 +13,7 @@ import {
   RATE_ZSCORE_WINDOW_SIZE,
   TELEGRAM_ADMIN_CHAT_ID,
   TELEGRAM_BOT_TOKEN,
+  WEBAPP_URL,
 } from '@config/env';
 
 export const properties = {
@@ -28,6 +29,7 @@ export const properties = {
     botToken: TELEGRAM_BOT_TOKEN,
     apiUrl: 'https://api.telegram.org/bot',
     adminChatId: TELEGRAM_ADMIN_CHAT_ID,
+    webAppUrl: WEBAPP_URL ?? '',
   },
   exchangeRate: {
     apiURL: 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search',
