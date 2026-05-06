@@ -44,7 +44,7 @@ body {
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 14px;
 }
 
@@ -210,4 +210,42 @@ body {
   font-size: 11px;
   opacity: 0.3;
   text-align: right;
+}
+
+/* LOGO */
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-weight: 700;
+  height: inherit;
+}
+
+.logo-img {
+  border-radius: 5px;
+  height: 48px;
+  width: 48px;
+  align-items: center;;
+}
+
+.logo-title {
+  line-height: 20px;
+  width: 50px;
+}
+.logo-word {
+  width: 100%;
+  font-size: au;
+}
+
+/* Footer team info */
+.team-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  margin-top: 20px;
+  font-weight: 500;
+  opacity: 0.7;
 }

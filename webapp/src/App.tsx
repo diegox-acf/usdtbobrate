@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ColorType,
+  CrosshairMode,
   IChartApi,
   ISeriesApi,
+  LastPriceAnimationMode,
+  LineStyle,
+  LineType,
+  PriceScaleMode,
   UTCTimestamp,
   createChart,
 } from 'lightweight-charts';
 import './App.css';
+
+import logo from './assets/logo.jpeg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,10 +27,10 @@ type TimeRange = '24H' | '7D' | '30D' | 'Todo';
 const RANGE_LABELS: TimeRange[] = ['24H', '7D', '30D', 'Todo'];
 
 const RANGE_MS: Record<TimeRange, number> = {
-  '24H':  86_400_000,
-  '7D':   604_800_000,
-  '30D':  2_592_000_000,
-  'Todo': Infinity,
+  '24H': 86_400_000,
+  '7D': 604_800_000,
+  '30D': 2_592_000_000,
+  Todo: Infinity,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -33,7 +40,9 @@ function filterByRange(data: RatePoint[], range: TimeRange): RatePoint[] {
   return data.filter((d) => d.timestamp >= cutoff);
 }
 
-function toChartData(data: RatePoint[]): { time: UTCTimestamp; value: number }[] {
+function toChartData(
+  data: RatePoint[]
+): { time: UTCTimestamp; value: number }[] {
   const map = new Map<number, number>();
   for (const d of data) map.set(Math.floor(d.timestamp / 1000), d.rate);
   return Array.from(map.entries())
@@ -45,28 +54,30 @@ const fmtRate = (v?: number) => (v != null ? v.toFixed(2) : '—');
 
 function fmtTimestamp(ts: number): string {
   const d = new Date(ts);
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} `
-    + `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return (
+    `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} ` +
+    `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef     = useRef<IChartApi | null>(null);
-  const sellRef      = useRef<ISeriesApi<'Area'> | null>(null);
-  const buyRef       = useRef<ISeriesApi<'Line'> | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const sellRef = useRef<ISeriesApi<'Area'> | null>(null);
+  const buyRef = useRef<ISeriesApi<'Line'> | null>(null);
 
-  const [sellData,   setSellData]   = useState<RatePoint[]>([]);
-  const [buyData,    setBuyData]    = useState<RatePoint[]>([]);
-  const [range,      setRange]      = useState<TimeRange>('7D');
-  const [showBuy,    setShowBuy]    = useState(true);
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState<string | null>(null);
+  const [sellData, setSellData] = useState<RatePoint[]>([]);
+  const [buyData, setBuyData] = useState<RatePoint[]>([]);
+  const [range, setRange] = useState<TimeRange>('7D');
+  const [showBuy, setShowBuy] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const tg       = (window as any).Telegram?.WebApp;
-  const bgColor  = tg?.themeParams?.bg_color  ?? '#17212b';
+  const tg = (window as any).Telegram?.WebApp;
+  const bgColor = tg?.themeParams?.bg_color ?? '#17212b';
   const txtColor = tg?.themeParams?.text_color ?? '#c5c8ce';
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
@@ -77,7 +88,10 @@ export default function App() {
       fetch('/api/exchange-rates?limit=300&tradeType=BUY'),
     ]);
     if (!sRes.ok || !bRes.ok) throw new Error('fetch failed');
-    const [sell, buy]: [RatePoint[], RatePoint[]] = await Promise.all([sRes.json(), bRes.json()]);
+    const [sell, buy]: [RatePoint[], RatePoint[]] = await Promise.all([
+      sRes.json(),
+      bRes.json(),
+    ]);
     setSellData(sell);
     setBuyData(buy);
   }, []);
@@ -101,23 +115,32 @@ export default function App() {
   //    its first paint, so we defer until we have data to display.
 
   useEffect(() => {
-    if (!containerRef.current || chartRef.current || sellData.length === 0) return;
+    if (!containerRef.current || chartRef.current || sellData.length === 0)
+      return;
 
     const chart = createChart(containerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: bgColor },
+        background: {
+          type: ColorType.Solid,
+          color: bgColor,
+        },
         textColor: txtColor,
+        // fontFamily: "'Roboto', sans-serif",
       },
       grid: {
         vertLines: { color: 'rgba(255,255,255,0.04)' },
         horzLines: { color: 'rgba(255,255,255,0.04)' },
       },
       crosshair: {
-        mode: 1,
-        vertLine: { labelBackgroundColor: '#2b3a4a' },
-        horzLine: { labelBackgroundColor: '#2b3a4a' },
+        mode: CrosshairMode.Magnet,
+        vertLine: { labelBackgroundColor: '#2b3a4a', labelVisible: true },
+        horzLine: { labelBackgroundColor: '#2b3a4a', labelVisible: true },
       },
-      rightPriceScale: { borderVisible: false },
+      rightPriceScale: {
+        mode: PriceScaleMode.Logarithmic,
+        borderVisible: false,
+        alignLabels: true,
+      },
       timeScale: {
         borderVisible: false,
         timeVisible: true,
@@ -125,36 +148,41 @@ export default function App() {
         fixLeftEdge: true,
         fixRightEdge: true,
       },
-      width:  containerRef.current.clientWidth,
-      height: 280,
+      width: containerRef.current.clientWidth,
+      height: 320,
     });
 
     sellRef.current = chart.addAreaSeries({
-      lineColor:              '#2ed573',
-      topColor:               'rgba(46,213,115,0.25)',
-      bottomColor:            'rgba(46,213,115,0)',
-      lineWidth:              2,
-      priceLineVisible:       true,
-      priceLineColor:         'rgba(46,213,115,0.4)',
-      lastValueVisible:       true,
+      lineColor: '#2ed573',
+      topColor: 'rgba(46, 213, 116, 0.53)',
+      bottomColor: 'rgba(46,213,115,0)',
+      lineWidth: 2,
+      priceLineVisible: false,
+      priceLineColor: 'rgba(46,213,115,0.4)',
+      lastValueVisible: true,
+      lastPriceAnimation: LastPriceAnimationMode.Continuous,
       crosshairMarkerVisible: true,
-      crosshairMarkerRadius:  4,
+      crosshairMarkerRadius: 4,
+      lineType: LineType.Curved,
     });
 
     buyRef.current = chart.addLineSeries({
-      color:                  '#54a0ff',
-      lineWidth:              1,
-      lineStyle:              2, // Dashed
-      priceLineVisible:       false,
-      lastValueVisible:       true,
+      color: '#54a0ff',
+      lineWidth: 1,
+      lineStyle: LineStyle.Dotted, // Dashed
+      priceLineVisible: false,
+      lastValueVisible: true,
+      lastPriceAnimation: LastPriceAnimationMode.Continuous,
       crosshairMarkerVisible: true,
-      crosshairMarkerRadius:  3,
+      crosshairMarkerRadius: 4,
+      lineType: LineType.Curved,
     });
 
     chartRef.current = chart;
 
     const onResize = () => {
-      containerRef.current && chart.applyOptions({ width: containerRef.current.clientWidth });
+      containerRef.current &&
+        chart.applyOptions({ width: containerRef.current.clientWidth });
     };
     window.addEventListener('resize', onResize);
 
@@ -162,8 +190,8 @@ export default function App() {
       window.removeEventListener('resize', onResize);
       chart.remove();
       chartRef.current = null;
-      sellRef.current  = null;
-      buyRef.current   = null;
+      sellRef.current = null;
+      buyRef.current = null;
     };
   }, [sellData]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -184,26 +212,25 @@ export default function App() {
 
   // ── Derived stats ──────────────────────────────────────────────────────────
 
-  const fSell     = filterByRange(sellData, range);
-  const fBuy      = filterByRange(buyData,  range);
-  const latest    = fSell[fSell.length - 1];
-  const first     = fSell[0];
+  const fSell = filterByRange(sellData, range);
+  const fBuy = filterByRange(buyData, range);
+  const latest = fSell[fSell.length - 1];
+  const first = fSell[0];
   const latestBuy = fBuy[fBuy.length - 1];
   const sellRates = fSell.map((d) => d.rate);
-  const maxSell   = sellRates.length ? Math.max(...sellRates) : undefined;
-  const minSell   = sellRates.length ? Math.min(...sellRates) : undefined;
-  const change    = latest && first ? latest.rate - first.rate : 0;
+  const maxSell = sellRates.length ? Math.max(...sellRates) : undefined;
+  const minSell = sellRates.length ? Math.min(...sellRates) : undefined;
+  const change = latest && first ? latest.rate - first.rate : 0;
   const changePct = first?.rate ? (change / first.rate) * 100 : 0;
-  const hasData   = !loading && fSell.length > 0;
+  const hasData = !loading && fSell.length > 0;
 
   const changeClass = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
-  const changeSign  = change > 0 ? '+' : '';
+  const changeSign = change > 0 ? '+' : '';
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="app" style={{ background: bgColor, color: txtColor }}>
-
       {/* Loading state */}
       {loading && (
         <div className="center-state">
@@ -216,7 +243,9 @@ export default function App() {
       {!loading && error && sellData.length === 0 && (
         <div className="center-state">
           <span className="error-text">{error}</span>
-          <button className="range-btn active" onClick={handleRefresh}>Reintentar</button>
+          <button className="range-btn active" onClick={handleRefresh}>
+            Reintentar
+          </button>
         </div>
       )}
 
@@ -224,12 +253,26 @@ export default function App() {
       {hasData && (
         <>
           <div className="header">
+            <div className="logo">
+              <img className="logo-img" src={logo} alt="logo" />
+              <div className="logo-title">
+                <p className="logo-word">USDT</p>
+                <p className="logo-word">BOB</p>
+                <p className="logo-word">BOT</p>
+              </div>
+            </div>
             <div className="header-left">
               <div className="label">USDT → BOB</div>
               <div className="price">{fmtRate(latest?.rate)}</div>
               <div className={`change ${changeClass}`}>
-                {changeClass === 'up' ? '▲' : changeClass === 'down' ? '▼' : '—'}{' '}
-                {changeSign}{Math.abs(change).toFixed(2)} ({changeSign}{Math.abs(changePct).toFixed(2)}%)
+                {changeClass === 'up'
+                  ? '▲'
+                  : changeClass === 'down'
+                    ? '▼'
+                    : '—'}{' '}
+                {changeSign}
+                {Math.abs(change).toFixed(2)} ({changeSign}
+                {Math.abs(changePct).toFixed(2)}%)
               </div>
             </div>
             <button
@@ -244,14 +287,16 @@ export default function App() {
 
           <div className="stats">
             {[
-              { label: 'Venta',  value: fmtRate(latest?.rate),  cls: 'sell' },
+              { label: 'Venta', value: fmtRate(latest?.rate), cls: 'sell' },
               { label: 'Compra', value: fmtRate(latestBuy?.rate), cls: 'buy' },
-              { label: 'Máx',    value: fmtRate(maxSell),        cls: '' },
-              { label: 'Mín',    value: fmtRate(minSell),        cls: '' },
+              { label: 'Máx', value: fmtRate(maxSell), cls: '' },
+              { label: 'Mín', value: fmtRate(minSell), cls: '' },
             ].map(({ label, value, cls }) => (
               <div key={label} className="stat">
                 <span className="stat-label">{label}</span>
-                <span className={`stat-value${cls ? ` ${cls}` : ''}`}>{value}</span>
+                <span className={`stat-value${cls ? ` ${cls}` : ''}`}>
+                  {value}
+                </span>
               </div>
             ))}
           </div>
@@ -269,7 +314,9 @@ export default function App() {
               ))}
             </div>
             <div className="legend">
-              <button className="legend-btn sell-btn" disabled>● Venta</button>
+              <button className="legend-btn sell-btn" disabled>
+                ● Venta
+              </button>
               <button
                 className={`legend-btn buy-btn${showBuy ? '' : ' off'}`}
                 onClick={() => setShowBuy((v) => !v)}
@@ -297,10 +344,15 @@ export default function App() {
       {hasData && latest && (
         <div className="footer">
           {fSell.length} lecturas · última {fmtTimestamp(latest.timestamp)}
-          {error && <span style={{ color: '#ff5555', marginLeft: 6 }}>· {error}</span>}
+          {error && (
+            <span style={{ color: '#ff5555', marginLeft: 6 }}>· {error}</span>
+          )}
         </div>
       )}
-
+      <footer className="team-info">
+        <p>Made with ❤️ by Balux Team</p>
+        <p>© 2026 USDT BOB BOT, Inc.</p>
+      </footer>
     </div>
   );
 }
