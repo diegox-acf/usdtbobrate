@@ -35,28 +35,37 @@ export const startJobScheduler = () => {
         saveExchangeRateEntry(buyEntry),
       ]);
 
-      const trend = lastEntry ? formatTrend(sellEntry.rate, lastEntry.rate) : '';
+      const trend = lastEntry
+        ? formatTrend(sellEntry.rate, lastEntry.rate)
+        : '';
       const cooldownMs = properties.job.alertCooldownMs;
       const algorithm = properties.exchangeRate.alertAlgorithm;
 
       if (!isOnCooldown(cooldownMs)) {
         const [kadaneRate, rawZScore] = await Promise.all([
-          algorithm !== 'zscore' ? checkHighExchangeRateIncrease() : Promise.resolve(null),
-          algorithm !== 'kadane' ? computeCurrentZScore() : Promise.resolve(null),
+          algorithm !== 'zscore'
+            ? checkHighExchangeRateIncrease()
+            : Promise.resolve(null),
+          algorithm !== 'kadane'
+            ? computeCurrentZScore()
+            : Promise.resolve(null),
         ]);
         const kadaneTriggered = kadaneRate !== null;
         const anyTriggered = kadaneTriggered || rawZScore !== null;
 
         if (anyTriggered) {
           await sendHighRateAlertsPerUser(
-            `Alerta de precio alto: ${formatPrice(sellEntry.rate)} ${trend}`,
+            `Subida de precio: ${formatPrice(sellEntry.rate)}Bs | ${trend}`,
             rawZScore,
-            kadaneTriggered,
+            kadaneTriggered
           );
           markAlertSent();
-        } else if (lastEntry !== null && stepCrossed(sellEntry.rate, lastEntry.rate)) {
+        } else if (
+          lastEntry !== null &&
+          stepCrossed(sellEntry.rate, lastEntry.rate)
+        ) {
           await sendAlerts(
-            `El precio llego a ${formatPrice(sellEntry.rate)} ${trend}`,
+            `El precio llego a ${formatPrice(sellEntry.rate)}Bs |  ${trend}`,
             'step'
           );
           markAlertSent();

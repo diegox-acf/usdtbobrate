@@ -34,7 +34,12 @@ const mainMenuKeyboard = (isSubscribed: boolean) => {
     [{ text: '⚙️ Configuración', callback_data: 'settings' }],
   ];
   if (properties.telegram.webAppUrl) {
-    rows.splice(2, 0, [{ text: '📈 Ver historial', web_app: { url: properties.telegram.webAppUrl } } as any]);
+    rows.splice(2, 0, [
+      {
+        text: '📈 Ver historial',
+        web_app: { url: properties.telegram.webAppUrl },
+      } as any,
+    ]);
   }
   return { inline_keyboard: rows };
 };
@@ -47,9 +52,24 @@ const sensitivityLabel: Record<AlertSensitivity, string> = {
 
 const sensitivityMenuKeyboard = (current: AlertSensitivity) => ({
   inline_keyboard: [
-    [{ text: `${current === 'alta' ? '✅' : '  '} Alta — alertas frecuentes`, callback_data: 'set_sensitivity_alta' }],
-    [{ text: `${current === 'media' ? '✅' : '  '} Media — por defecto`, callback_data: 'set_sensitivity_media' }],
-    [{ text: `${current === 'baja' ? '✅' : '  '} Baja — solo grandes subidas`, callback_data: 'set_sensitivity_baja' }],
+    [
+      {
+        text: `${current === 'alta' ? '✅' : '  '} Alta — alertas frecuentes`,
+        callback_data: 'set_sensitivity_alta',
+      },
+    ],
+    [
+      {
+        text: `${current === 'media' ? '✅' : '  '} Media — por defecto`,
+        callback_data: 'set_sensitivity_media',
+      },
+    ],
+    [
+      {
+        text: `${current === 'baja' ? '✅' : '  '} Baja — solo grandes subidas`,
+        callback_data: 'set_sensitivity_baja',
+      },
+    ],
     [{ text: '🔙 Configuración', callback_data: 'settings' }],
   ],
 });
@@ -282,7 +302,7 @@ telegramBot.on('callback_query', async (query) => {
           alertHighRateEnabled: true,
         });
         await editMenu(
-          '✅ ¡Suscrito! Recibirás alertas de precio.',
+          '✅ ¡Suscrito! Recibirás alertas de subida de precio.',
           mainMenuKeyboard(true)
         );
       } catch (error: any) {
@@ -399,7 +419,7 @@ telegramBot.on('callback_query', async (query) => {
       if (!doc) break;
       const user = doc.toObject() as TelegramUser;
       await editMenu(
-        '📊 Sensibilidad de alertas de precio alto\n\nElige qué tan sensible deben ser las alertas Z-score:',
+        '📊 Sensibilidad de alertas de subida de precio\n\nElige qué tan sensible deben ser las alertas:',
         sensitivityMenuKeyboard(user.alertSensitivity ?? 'media')
       );
       break;
@@ -416,7 +436,7 @@ telegramBot.on('callback_query', async (query) => {
       const newLevel = levelMap[query.data!];
       await updateUser(String(chatId), { alertSensitivity: newLevel });
       await editMenu(
-        '📊 Sensibilidad de alertas de precio alto\n\nElige qué tan sensible deben ser las alertas Z-score:',
+        '📊 Sensibilidad de alertas de subida de precio\n\nElige qué tan sensible deben ser las alertas:',
         sensitivityMenuKeyboard(newLevel)
       );
       break;
